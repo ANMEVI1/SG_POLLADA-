@@ -1,0 +1,54 @@
+# ============================================================
+# SG_POLLADA - Apache Configuration
+# Compatible con InfinityFree (Apache + shared hosting)
+# ============================================================
+
+# Desactivar listado de directorios
+Options -Indexes
+
+# Codificación UTF-8
+AddDefaultCharset UTF-8
+
+# Proteger archivos sensibles
+<FilesMatch "\.(sql|md|gitignore|gitattributes|example\.php)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Proteger directorio config (acceso directo)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Bloquear acceso directo a config/env.php
+    RewriteRule ^config/env\.php$ - [F,L]
+    
+    # Bloquear acceso directo a database/
+    RewriteRule ^database/ - [F,L]
+</IfModule>
+
+# Cabeceras de seguridad básicas
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Compresión (si disponible)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript
+</IfModule>
+
+# Cache de assets estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# PHP settings (InfinityFree compatible)
+<IfModule mod_php.c>
+    php_value display_errors 0
+    php_value log_errors 1
+    php_value error_reporting 22527
+    php_value max_execution_time 30
+    php_value upload_max_filesize 2M
+</IfModule>

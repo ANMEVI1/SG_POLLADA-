@@ -1,0 +1,30 @@
+# ============================================================
+# SG_POLLADA - Git Attributes
+# Forzar LF (Linux) en todos los archivos de texto
+# Evita problemas CRLF al desplegar en InfinityFree (Linux)
+# ============================================================
+
+# Normalizar todos los archivos de texto a LF
+* text=auto eol=lf
+
+# Archivos específicos - forzar LF
+*.php text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.sql text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.txt text eol=lf
+*.htaccess text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# Binarios - no tocar
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary

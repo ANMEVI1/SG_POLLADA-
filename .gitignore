@@ -1,0 +1,25 @@
+# ============================================================
+# SG_POLLADA - Git Ignore
+# ============================================================
+
+# Credenciales locales (NUNCA subir a git)
+config/env.php
+
+# Sistemas operativos
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Dependencias (si se agregan después)
+/vendor/
+/node_modules/
