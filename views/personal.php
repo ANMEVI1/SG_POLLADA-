@@ -35,6 +35,10 @@ $iniciales = [
 <!-- TAB: EQUIPO -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div class="tab-content active" id="tab-equipo" data-group="pers">
+    <div class="d-flex justify-between align-center mb-12">
+        <span class="fs-sm text-muted"><?= count($personal) ?> miembros del equipo</span>
+        <button class="btn btn-primary btn-sm" onclick="newPersonal()">+ Nuevo Personal</button>
+    </div>
     <?php foreach ($personal as $p): ?>
         <div class="card">
             <div class="card-header">
@@ -148,3 +152,35 @@ $iniciales = [
     <?php endforeach; ?>
     <?php endif; ?>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODAL: Nuevo Personal -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalPersonal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Añadir Personal</span>
+            <button class="modal-close" onclick="closeModal('modalPersonal')">✕</button>
+        </div>
+        <form id="formPersonal">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre(s)</label>
+                    <input type="text" class="form-control" name="nombres" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Participación</label>
+                    <select class="form-control" name="participacion" required>
+                        <option value="ayudante">Ayudante</option>
+                        <option value="inversionista">Inversionista</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modalPersonal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+

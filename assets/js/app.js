@@ -199,6 +199,22 @@ async function saveReconocimiento(id, el) {
     await apiCall('personal', 'update_reconocimiento', { id, monto });
 }
 
+function newPersonal() {
+    const form = document.getElementById('formPersonal');
+    if (form) form.reset();
+    openModal('modalPersonal');
+}
+
+async function savePersonal(form) {
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    const result = await apiCall('personal', 'add_personal', data);
+    if (result.success) {
+        closeModal('modalPersonal');
+        location.reload();
+    }
+}
+
 // ============================================================
 // ENTREGA MODULE
 // ============================================================
@@ -364,18 +380,44 @@ async function abrirCaja() {
     if (result.success) location.reload();
 }
 
-// Cerrar caja - show PIN modal
-function solicitarCierre() {
+let pinAction = '';
+
+// Abrir caja - show PIN modal
+function solicitarApertura() {
+    pinAction = 'abrir_caja';
+    document.getElementById('modalPinTitle').textContent = '🔐 Abrir Jornada';
+    document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para abrir la jornada';
+    document.getElementById('btnSubmitPin').textContent = '🟢 Abrir Jornada';
+    document.getElementById('btnSubmitPin').className = 'btn btn-success';
+    
+    // Clear inputs
+    document.querySelectorAll('.pin-input').forEach(i => i.value = '');
     openModal('modalPin');
-    // Focus first pin input
     setTimeout(() => {
         const firstInput = document.querySelector('.pin-input');
         if (firstInput) firstInput.focus();
     }, 300);
 }
 
-// Verify PIN and close
-async function cerrarCaja() {
+// Cerrar caja - show PIN modal
+function solicitarCierre() {
+    pinAction = 'cerrar_caja';
+    document.getElementById('modalPinTitle').textContent = '🔐 Cerrar Jornada';
+    document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada';
+    document.getElementById('btnSubmitPin').textContent = '🔴 Cerrar Jornada';
+    document.getElementById('btnSubmitPin').className = 'btn btn-danger';
+    
+    // Clear inputs
+    document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+    openModal('modalPin');
+    setTimeout(() => {
+        const firstInput = document.querySelector('.pin-input');
+        if (firstInput) firstInput.focus();
+    }, 300);
+}
+
+// Verify PIN and submit
+async function submitPin() {
     const inputs = document.querySelectorAll('.pin-input');
     let pin = '';
     inputs.forEach(input => pin += input.value);
@@ -385,7 +427,7 @@ async function cerrarCaja() {
         return;
     }
     
-    const result = await apiCall('cuadre', 'cerrar_caja', { pin });
+    const result = await apiCall('cuadre', pinAction, { pin });
     if (result.success) {
         closeModal('modalPin');
         location.reload();
@@ -429,6 +471,9 @@ document.addEventListener('submit', (e) => {
     } else if (form.id === 'formCliente') {
         e.preventDefault();
         saveCliente(form);
+    } else if (form.id === 'formPersonal') {
+        e.preventDefault();
+        savePersonal(form);
     }
 });
 

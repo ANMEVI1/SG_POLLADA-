@@ -9,14 +9,18 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 switch ($action) {
 
     case 'abrir_caja':
-        // Check if there's already an open cuadre
+        $pinInput = $_POST['pin'] ?? '';
+        $pinReal = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'pin_cierre'")->fetchColumn();
+        if ($pinInput !== $pinReal) {
+            echo json_encode(['success' => false, 'message' => 'PIN incorrecto']);
+            exit;
+        }
         $open = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' LIMIT 1")->fetch();
         if ($open) {
             echo json_encode(['success' => false, 'message' => 'Ya hay una caja abierta']);
             break;
         }
-        $stmt = $pdo->prepare("INSERT INTO cuadre_caja (hora_apertura, estado) VALUES (NOW(), 'abierto')");
-        $stmt->execute();
+        $pdo->query("INSERT INTO cuadre_caja (hora_apertura, estado) VALUES (NOW(), 'abierto')");
         echo json_encode(['success' => true, 'message' => '🟢 Jornada abierta']);
         break;
 

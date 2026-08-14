@@ -8,6 +8,12 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
 
+    case 'add_personal':
+        $stmt = $pdo->prepare("INSERT INTO personal (nombres, participacion, reconocimiento_monetario) VALUES (?, ?, 0)");
+        $stmt->execute([trim($_POST['nombres']), $_POST['participacion']]);
+        echo json_encode(['success' => true, 'message' => 'Personal agregado']);
+        break;
+
     case 'update_reconocimiento':
         $stmt = $pdo->prepare("UPDATE personal SET reconocimiento_monetario = ? WHERE id = ?");
         $stmt->execute([floatval($_POST['monto']), $_POST['id']]);

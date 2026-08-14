@@ -47,6 +47,9 @@ $montoTotal = array_sum(array_map(fn($e) => $e['entregado'] ? $e['platillo_preci
 $inicio = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'codigo_cliente_inicio'")->fetchColumn() ?: '0347';
 $maxCode = $pdo->query("SELECT MAX(CAST(codigo_4digitos AS UNSIGNED)) FROM cliente")->fetchColumn();
 $nextCode = str_pad(max(intval($inicio), intval($maxCode) + 1), 4, '0', STR_PAD_LEFT);
+
+// Verificar si la caja está abierta
+$cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' LIMIT 1")->fetch();
 ?>
 
 <!-- Tabs -->
@@ -60,8 +63,16 @@ $nextCode = str_pad(max(intval($inicio), intval($maxCode) + 1), 4, '0', STR_PAD_
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div class="tab-content active" id="tab-entregas" data-group="ent">
 
-    <!-- Stats Row -->
-    <div class="stats-row cols-3 mb-12">
+    <?php if (!$cajaAbierta): ?>
+        <div class="empty-state">
+            <div class="empty-icon">🔴</div>
+            <p class="text-danger fw-600 mb-8" style="font-size:16px;">Jornada Cerrada</p>
+            <p class="mb-16">No puedes gestionar entregas porque la caja no está abierta.</p>
+            <button class="btn btn-primary" onclick="window.location.href='?page=cuadre'">Ir a abrir Jornada</button>
+        </div>
+    <?php else: ?>
+        <!-- Stats Row -->
+        <div class="stats-row cols-3 mb-12">
         <div class="stat-card">
             <div class="stat-value" id="statTotal"><?= $totalEntregas ?></div>
             <div class="stat-label">Total</div>
@@ -177,6 +188,7 @@ $nextCode = str_pad(max(intval($inicio), intval($maxCode) + 1), 4, '0', STR_PAD_
     ?>
         <button class="fab" onclick="generarEntregas()" title="Generar entregas (<?= $sinEntrega ?> clientes sin asignar)">⚡</button>
     <?php endif; ?>
+    <?php endif; // Fin if cajaAbierta ?>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->

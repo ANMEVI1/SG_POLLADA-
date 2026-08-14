@@ -73,7 +73,7 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
     <!-- Action Buttons -->
     <div class="mb-14">
         <?php if (!$cajaAbierta): ?>
-            <button class="btn btn-success btn-block" onclick="abrirCaja()">
+            <button class="btn btn-success btn-block" onclick="solicitarApertura()">
                 🟢 Abrir Jornada
             </button>
         <?php else: ?>
@@ -259,16 +259,16 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL: PIN de Cierre -->
+<!-- MODAL: PIN -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="modalPin">
     <div class="modal">
         <div class="modal-header">
-            <span class="modal-title">🔐 PIN de Cierre</span>
+            <span class="modal-title" id="modalPinTitle">🔐 Confirmación por PIN</span>
             <button class="modal-close" onclick="closeModal('modalPin')">✕</button>
         </div>
         <div class="modal-body text-center">
-            <p class="text-muted mb-16" style="font-size:13px">Ingresa el PIN de 4 dígitos para cerrar la jornada</p>
+            <p class="text-muted mb-16" style="font-size:13px" id="modalPinDesc">Ingresa el PIN de 4 dígitos</p>
             <div class="pin-input-group">
                 <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
                 <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
@@ -278,7 +278,7 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline" onclick="closeModal('modalPin')">Cancelar</button>
-            <button type="button" class="btn btn-danger" onclick="cerrarCaja()">🔴 Cerrar Jornada</button>
+            <button type="button" class="btn btn-danger" id="btnSubmitPin" onclick="submitPin()">Confirmar</button>
         </div>
     </div>
 </div>
