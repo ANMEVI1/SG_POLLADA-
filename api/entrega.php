@@ -27,7 +27,32 @@ switch ($action) {
             $codigo,
             $zonaId
         ]);
-        echo json_encode(['success' => true, 'message' => 'Cliente registrado', 'id' => $pdo->lastInsertId()]);
+        $id = $pdo->lastInsertId();
+        
+        $c = $pdo->query("SELECT c.*, z.nombre AS zona_nombre FROM cliente c LEFT JOIN zona_entrega z ON c.zona_entrega_id = z.id WHERE c.id = " . $id)->fetch();
+        ob_start();
+        ?>
+        <div class="list-item" id="cliente-<?= $c['id'] ?>">
+            <div style="background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;font-family:monospace;letter-spacing:1px;flex-shrink:0;">
+                <?= $c['codigo_4digitos'] ?>
+            </div>
+            <div class="item-info">
+                <div class="item-name"><?= htmlspecialchars($c['nombre']) ?></div>
+                <div class="item-meta">
+                    📍 <?= htmlspecialchars($c['direccion']) ?>
+                    <?php if ($c['zona_nombre']): ?> · <?= htmlspecialchars($c['zona_nombre']) ?><?php endif; ?>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="btn-icon btn-outline sm" 
+                        onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>')">✏️</button>
+                <button class="btn-icon btn-outline sm" onclick="deleteCliente(<?= $c['id'] ?>)">🗑️</button>
+            </div>
+        </div>
+        <?php
+        $html = ob_get_clean();
+        
+        echo json_encode(['success' => true, 'message' => 'Cliente registrado', 'id' => $id, 'html' => $html]);
         break;
 
     case 'edit_cliente':
@@ -42,7 +67,31 @@ switch ($action) {
         ]);
         // Also update zona in entrega_cliente
         $pdo->prepare("UPDATE entrega_cliente SET zona_entrega_id=? WHERE cliente_id=?")->execute([$zonaId, $_POST['cliente_id']]);
-        echo json_encode(['success' => true, 'message' => 'Cliente actualizado']);
+        
+        $c = $pdo->query("SELECT c.*, z.nombre AS zona_nombre FROM cliente c LEFT JOIN zona_entrega z ON c.zona_entrega_id = z.id WHERE c.id = " . intval($_POST['cliente_id']))->fetch();
+        ob_start();
+        ?>
+        <div class="list-item" id="cliente-<?= $c['id'] ?>">
+            <div style="background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;font-family:monospace;letter-spacing:1px;flex-shrink:0;">
+                <?= $c['codigo_4digitos'] ?>
+            </div>
+            <div class="item-info">
+                <div class="item-name"><?= htmlspecialchars($c['nombre']) ?></div>
+                <div class="item-meta">
+                    📍 <?= htmlspecialchars($c['direccion']) ?>
+                    <?php if ($c['zona_nombre']): ?> · <?= htmlspecialchars($c['zona_nombre']) ?><?php endif; ?>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="btn-icon btn-outline sm" 
+                        onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>')">✏️</button>
+                <button class="btn-icon btn-outline sm" onclick="deleteCliente(<?= $c['id'] ?>)">🗑️</button>
+            </div>
+        </div>
+        <?php
+        $html = ob_get_clean();
+        
+        echo json_encode(['success' => true, 'message' => 'Cliente actualizado', 'html' => $html, 'id' => $c['id']]);
         break;
 
     case 'delete_cliente':
@@ -171,8 +220,11 @@ switch ($action) {
         $total = $pdo->query("SELECT COUNT(*) FROM entrega_cliente")->fetchColumn();
         $entregados = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE entregado = 1")->fetchColumn();
         $conArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE con_arroz = 1")->fetchColumn();
-        $pagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pagado'")->fetchColumn();
-        $montoTotal = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta")->fetchColumn();
+        $pagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago != 'pendiente'")->fetchColumn();
+        $deudores = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente'")->fetchColumn();
+        
+        $montoEsperado = $pdo->query("SELECT COALESCE(SUM(p.precio), 0) FROM entrega_cliente ec JOIN platillo p ON ec.platillo_id = p.id")->fetchColumn();
+        $montoRecaudado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago != 'pendiente'")->fetchColumn();
         
         echo json_encode([
             'success' => true,
@@ -182,7 +234,9 @@ switch ($action) {
                 'pendientes' => $total - $entregados,
                 'con_arroz' => $conArroz,
                 'pagados' => $pagados,
-                'monto_total' => $montoTotal
+                'deudores' => $deudores,
+                'monto_esperado' => $montoEsperado,
+                'monto_recaudado' => $montoRecaudado
             ]
         ]);
         break;

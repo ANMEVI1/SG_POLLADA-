@@ -24,3 +24,4 @@ desktop.ini
 # Dependencias (si se agregan después)
 /vendor/
 /node_modules/
+tests/backup/

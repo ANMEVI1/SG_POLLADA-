@@ -26,9 +26,9 @@
     --text: #212121;
     --text-secondary: #757575;
     --text-muted: #9E9E9E;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-md: 0 2px 8px rgba(0,0,0,0.1);
-    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -41,7 +41,9 @@
 /* ============================================================
    RESET & BASE
    ============================================================ */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -64,9 +66,23 @@ body {
     overflow-x: hidden;
 }
 
-a { color: var(--primary); text-decoration: none; }
-img { max-width: 100%; height: auto; }
-input, select, textarea, button { font-family: inherit; font-size: inherit; }
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+input,
+select,
+textarea,
+button {
+    font-family: inherit;
+    font-size: inherit;
+}
 
 /* ============================================================
    HEADER
@@ -100,7 +116,7 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
 }
 
 .header-badge {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     padding: 2px 10px;
     border-radius: var(--radius-full);
     font-size: 12px;
@@ -122,7 +138,7 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     align-items: center;
     z-index: 100;
     border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -193,7 +209,9 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     scrollbar-width: none;
 }
 
-.section-tabs::-webkit-scrollbar { display: none; }
+.section-tabs::-webkit-scrollbar {
+    display: none;
+}
 
 .tab-pill {
     padding: 7px 16px;
@@ -219,8 +237,13 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     transform: scale(0.95);
 }
 
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
 
 /* ============================================================
    CARDS
@@ -306,10 +329,21 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     line-height: 1.2;
 }
 
-.stat-value.success { color: var(--success); }
-.stat-value.danger { color: var(--danger); }
-.stat-value.warning { color: var(--warning); }
-.stat-value.info { color: var(--info); }
+.stat-value.success {
+    color: var(--success);
+}
+
+.stat-value.danger {
+    color: var(--danger);
+}
+
+.stat-value.warning {
+    color: var(--warning);
+}
+
+.stat-value.info {
+    color: var(--info);
+}
 
 .stat-label {
     font-size: 10px;
@@ -467,6 +501,14 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     opacity: 0.85;
 }
 
+.delivery-card.hide-smoothly {
+    opacity: 0 !important;
+    transform: scale(0.95);
+    margin-bottom: -100px;
+    pointer-events: none;
+    transition: all 0.3s ease-out;
+}
+
 .delivery-card .dc-top {
     display: flex;
     justify-content: space-between;
@@ -585,14 +627,18 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     text-decoration: none;
 }
 
-.btn:active { transform: scale(0.96); }
+.btn:active {
+    transform: scale(0.96);
+}
 
 .btn-primary {
     background: var(--primary);
     color: #fff;
 }
 
-.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
 
 .btn-success {
     background: var(--success);
@@ -744,7 +790,7 @@ select.form-control {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 200;
     justify-content: center;
     align-items: flex-end;
@@ -863,7 +909,9 @@ select.form-control {
     margin-bottom: 4px;
 }
 
-.filter-row::-webkit-scrollbar { display: none; }
+.filter-row::-webkit-scrollbar {
+    display: none;
+}
 
 .filter-pill {
     padding: 5px 12px;
@@ -892,7 +940,7 @@ select.form-control {
     min-width: 18px;
     height: 18px;
     border-radius: 9px;
-    background: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.25);
     font-size: 10px;
     padding: 0 4px;
     margin-left: 4px;
@@ -950,7 +998,9 @@ select.form-control {
     border-bottom: 1px solid var(--border-light);
 }
 
-.category-bar:last-child { border-bottom: none; }
+.category-bar:last-child {
+    border-bottom: none;
+}
 
 .category-bar .cat-name {
     font-size: 13px;
@@ -1152,33 +1202,113 @@ select.form-control {
 /* ============================================================
    UTILITIES
    ============================================================ */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-muted { color: var(--text-muted); }
-.text-success { color: var(--success); }
-.text-danger { color: var(--danger); }
-.text-primary { color: var(--primary); }
-.fw-600 { font-weight: 600; }
-.fw-700 { font-weight: 700; }
-.fs-sm { font-size: 12px; }
-.mt-4 { margin-top: 4px; }
-.mt-8 { margin-top: 8px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mb-4 { margin-bottom: 4px; }
-.mb-8 { margin-bottom: 8px; }
-.mb-12 { margin-bottom: 12px; }
-.mb-14 { margin-bottom: 14px; }
-.mb-16 { margin-bottom: 16px; }
-.d-flex { display: flex; }
-.align-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-6 { gap: 6px; }
-.gap-8 { gap: 8px; }
-.gap-10 { gap: 10px; }
-.flex-1 { flex: 1; }
-.w-100 { width: 100%; }
-.hidden { display: none !important; }
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-success {
+    color: var(--success);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.fw-600 {
+    font-weight: 600;
+}
+
+.fw-700 {
+    font-weight: 700;
+}
+
+.fs-sm {
+    font-size: 12px;
+}
+
+.mt-4 {
+    margin-top: 4px;
+}
+
+.mt-8 {
+    margin-top: 8px;
+}
+
+.mt-12 {
+    margin-top: 12px;
+}
+
+.mt-16 {
+    margin-top: 16px;
+}
+
+.mb-4 {
+    margin-bottom: 4px;
+}
+
+.mb-8 {
+    margin-bottom: 8px;
+}
+
+.mb-12 {
+    margin-bottom: 12px;
+}
+
+.mb-14 {
+    margin-bottom: 14px;
+}
+
+.mb-16 {
+    margin-bottom: 16px;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-6 {
+    gap: 6px;
+}
+
+.gap-8 {
+    gap: 8px;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
 
 .divider {
     border: none;
@@ -1190,24 +1320,49 @@ select.form-control {
    ANIMATIONS
    ============================================================ */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 @keyframes checkmark {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .animate-check {
@@ -1246,17 +1401,35 @@ select.form-control {
     animation: slideDown 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
 }
 
-.toast.success { background: var(--success); }
-.toast.error { background: var(--danger); }
+.toast.success {
+    background: var(--success);
+}
+
+.toast.error {
+    background: var(--danger);
+}
 
 @keyframes slideDown {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; pointer-events: none; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        pointer-events: none;
+    }
 }
 
 /* ============================================================
@@ -1272,7 +1445,9 @@ select.form-control {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================================
@@ -1282,7 +1457,7 @@ select.form-control {
     .main-content {
         padding: 16px 20px;
     }
-    
+
     .stats-row {
         grid-template-columns: repeat(4, 1fr);
     }

@@ -40,9 +40,10 @@ $totalEntregas = count($entregas);
 $totalEntregados = count(array_filter($entregas, fn($e) => $e['entregado']));
 $totalPendientes = $totalEntregas - $totalEntregados; // Pendientes de entrega
 $totalArroz = count(array_filter($entregas, fn($e) => $e['con_arroz']));
-$totalPagados = count(array_filter($entregas, fn($e) => $e['estado_pago'] !== 'pendiente'));
+$totalPagados = count(array_filter($entregas, fn($e) => $e['estado_pago'] !== null && $e['estado_pago'] !== 'pendiente'));
 $totalDeudores = count(array_filter($entregas, fn($e) => $e['entregado'] && $e['estado_pago'] === 'pendiente'));
-$montoTotal = array_sum(array_map(fn($e) => $e['entregado'] ? $e['platillo_precio'] : 0, $entregas));
+$montoEsperado = array_sum(array_column($entregas, 'platillo_precio'));
+$montoRecaudado = array_sum(array_map(fn($e) => ($e['estado_pago'] !== null && $e['estado_pago'] !== 'pendiente') ? $e['platillo_precio'] : 0, $entregas));
 
 // Next code
 $inicio = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'codigo_cliente_inicio'")->fetchColumn() ?: '0347';
@@ -73,10 +74,10 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         </div>
     <?php else: ?>
         <!-- Stats Row -->
-        <div class="stats-row cols-3 mb-12">
+    <div class="stats-row cols-3 mb-12">
         <div class="stat-card">
             <div class="stat-value" id="statTotal"><?= $totalEntregas ?></div>
-            <div class="stat-label">Total</div>
+            <div class="stat-label">Total Entregas</div>
         </div>
         <div class="stat-card">
             <div class="stat-value success" id="statEntregados"><?= $totalEntregados ?></div>
@@ -84,22 +85,40 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         </div>
         <div class="stat-card">
             <div class="stat-value danger" id="statPendientes"><?= $totalPendientes ?></div>
-            <div class="stat-label">Pendientes</div>
+            <div class="stat-label">Por Entregar</div>
         </div>
     </div>
-    <div class="stats-row cols-3 mb-12">
-        <div class="stat-card">
-            <div class="stat-value warning" id="statArroz"><?= $totalArroz ?></div>
-            <div class="stat-label">Con Arroz</div>
+
+    <!-- Extra Stats Hidden by Default -->
+    <div id="extraStats" style="display:none;">
+        <div class="stats-row cols-3 mb-12">
+            <div class="stat-card">
+                <div class="stat-value warning" id="statArroz"><?= $totalArroz ?></div>
+                <div class="stat-label">Con Arroz</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value info" id="statPagados"><?= $totalPagados ?></div>
+                <div class="stat-label">Pagados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value danger" id="statDeudores"><?= $totalDeudores ?></div>
+                <div class="stat-label">Deudores</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value info" id="statPagados"><?= $totalPagados ?></div>
-            <div class="stat-label">Pagados</div>
+        <div class="stats-row cols-2 mb-12">
+            <div class="stat-card">
+                <div class="stat-value text-muted" id="statEsperado" style="font-size:18px;">S/<?= number_format($montoEsperado, 2) ?></div>
+                <div class="stat-label">Monto Esperado Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value success" id="statRecaudado" style="font-size:18px;">S/<?= number_format($montoRecaudado, 2) ?></div>
+                <div class="stat-label">Neto Recaudado</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value success" id="statMonto">S/<?= number_format($montoTotal, 2) ?></div>
-            <div class="stat-label">Vendido</div>
-        </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 16px;">
+        <button class="btn btn-outline btn-sm" onclick="const e = document.getElementById('extraStats'); e.style.display = e.style.display === 'none' ? 'block' : 'none'; this.textContent = e.style.display === 'none' ? 'Ver detalles financieros ▼' : 'Ocultar detalles ▲';">Ver detalles financieros ▼</button>
     </div>
 
     <!-- Search -->
@@ -109,7 +128,7 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                oninput="searchEntregas(this.value)" id="searchInput">
     </div>
 
-    <!-- Filters -->
+    <!-- Primary Filters -->
     <div class="filter-row">
         <button class="filter-pill active" data-filter="todos" onclick="filterEntregas('todos')">
             Todos <span class="filter-count"><?= $totalEntregas ?></span>
@@ -120,6 +139,13 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         <button class="filter-pill" data-filter="entregados" onclick="filterEntregas('entregados')">
             Entregados <span class="filter-count"><?= $totalEntregados ?></span>
         </button>
+        <button class="filter-pill" style="background: transparent; border: 1px dashed var(--primary-color); color: var(--primary-color); box-shadow: none;" onclick="const e = document.getElementById('extraFilters'); e.style.display = e.style.display === 'none' ? 'flex' : 'none';">
+            + Filtros
+        </button>
+    </div>
+
+    <!-- Secondary Filters (Hidden by Default) -->
+    <div class="filter-row" id="extraFilters" style="display: none; padding-top: 0; margin-top: -8px;">
         <button class="filter-pill" data-filter="arroz" onclick="filterEntregas('arroz')">
             Con Arroz <span class="filter-count"><?= $totalArroz ?></span>
         </button>
@@ -148,7 +174,7 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                  data-name="<?= htmlspecialchars($e['cliente_nombre']) ?>"
                  data-address="<?= htmlspecialchars($e['cliente_direccion']) ?>"
                  data-arroz="<?= $e['con_arroz'] ?>"
-                 data-pagado="<?= $e['estado_pago'] !== 'pendiente' ? '1' : '0' ?>"
+                 data-pagado="<?= ($e['estado_pago'] !== null && $e['estado_pago'] !== 'pendiente') ? '1' : '0' ?>"
                  data-deudor="<?= ($e['entregado'] && $e['estado_pago'] === 'pendiente') ? '1' : '0' ?>">
                 
                 <div class="dc-top">
@@ -200,13 +226,14 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         </div>
     <?php endif; ?>
 
-    <!-- Generate entregas button (when there are clientes without entregas) -->
-    <?php 
-    $sinEntrega = $pdo->query("SELECT COUNT(*) FROM cliente c LEFT JOIN entrega_cliente ec ON c.id = ec.cliente_id WHERE ec.id IS NULL")->fetchColumn();
-    if ($sinEntrega > 0):
-    ?>
-        <button class="fab" onclick="generarEntregas()" title="Generar entregas (<?= $sinEntrega ?> clientes sin asignar)">⚡</button>
-    <?php endif; ?>
+    <!-- FABs for Entregas Tab -->
+    <div style="position: fixed; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 50;">
+        <?php 
+        $sinEntrega = $pdo->query("SELECT COUNT(*) FROM cliente c LEFT JOIN entrega_cliente ec ON c.id = ec.cliente_id WHERE ec.id IS NULL")->fetchColumn();
+        ?>
+        <button class="fab" id="fabGenerar" style="position: relative; right: auto; bottom: auto; display: <?= $sinEntrega > 0 ? 'flex' : 'none' ?>;" onclick="generarEntregas()" title="Generar entregas pendientes">⚡</button>
+        <button class="fab" style="position: relative; right: auto; bottom: auto;" onclick="newCliente()" title="Añadir Nueva Entrega">+</button>
+    </div>
     <?php endif; // Fin if cajaAbierta ?>
 </div>
 
@@ -220,13 +247,19 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
     </div>
 
     <?php if (empty($clientes)): ?>
-        <div class="empty-state">
+        <div class="empty-state" id="clientesEmptyState">
             <div class="empty-icon">👤</div>
             <p>No hay clientes registrados. Agrega los clientes de la pollada.</p>
         </div>
+        <div id="clientesList"></div>
     <?php else: ?>
+        <div class="empty-state" id="clientesEmptyState" style="display:none;">
+            <div class="empty-icon">👤</div>
+            <p>No hay clientes registrados. Agrega los clientes de la pollada.</p>
+        </div>
+        <div id="clientesList">
         <?php foreach ($clientes as $c): ?>
-            <div class="list-item">
+            <div class="list-item" id="cliente-<?= $c['id'] ?>">
                 <div style="background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;font-family:monospace;letter-spacing:1px;flex-shrink:0;">
                     <?= $c['codigo_4digitos'] ?>
                 </div>
@@ -244,6 +277,7 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                 </div>
             </div>
         <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 
     <!-- FAB for new client -->
@@ -261,6 +295,7 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         </div>
         <form id="formCliente">
             <input type="hidden" name="cliente_id" id="clienteId">
+            <input type="hidden" id="clienteActionType" value="salir">
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Nombre</label>
@@ -289,9 +324,10 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('modalCliente')">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+            <div class="modal-footer" style="justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modalCliente')" style="margin-right: auto;">Cancelar</button>
+                <button type="submit" class="btn btn-outline" onclick="document.getElementById('clienteActionType').value='guardar'">Guardar</button>
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('clienteActionType').value='salir'">Guardar y salir</button>
             </div>
         </form>
     </div>

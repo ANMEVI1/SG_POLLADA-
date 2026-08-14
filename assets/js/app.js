@@ -292,15 +292,52 @@ function savePersonal(form) {
 // ENTREGA MODULE
 // ============================================================
 
-// Save cliente
 async function saveCliente(form) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
-    const action = data.cliente_id ? 'edit_cliente' : 'add_cliente';
+    const isEdit = !!data.cliente_id;
+    const action = isEdit ? 'edit_cliente' : 'add_cliente';
+    const actionType = document.getElementById('clienteActionType') ? document.getElementById('clienteActionType').value : 'salir';
+    
     const result = await apiCall('entrega', action, data);
-    if (result.success) {
-        closeModal('modalCliente');
-        location.reload();
+    if (result.success && result.html) {
+        const listContainer = document.getElementById('clientesList');
+        const emptyState = document.getElementById('clientesEmptyState');
+        
+        if (emptyState) emptyState.style.display = 'none';
+        
+        if (isEdit) {
+            const existingItem = document.getElementById('cliente-' + result.id);
+            if (existingItem) existingItem.outerHTML = result.html;
+        } else {
+            if (listContainer) listContainer.insertAdjacentHTML('beforeend', result.html);
+            
+            const countSpan = document.querySelector('#tab-clientes .fs-sm.text-muted');
+            if (countSpan) {
+                const match = countSpan.textContent.match(/\d+/);
+                const count = match ? parseInt(match[0]) : 0;
+                countSpan.textContent = `${count + 1} clientes registrados`;
+            }
+        }
+
+        if (actionType === 'salir' || isEdit) {
+            closeModal('modalCliente');
+        } else {
+            // Guardar y continuar agregando
+            document.getElementById('clienteNombre').value = '';
+            document.getElementById('clienteDireccion').value = '';
+            document.getElementById('clienteNombre').focus();
+            
+            // Consultar a la BD el código secuencial estricto (+1 real)
+            const codeResult = await apiCall('entrega', 'next_code');
+            if (codeResult && codeResult.success) {
+                document.getElementById('clienteCodigo').value = codeResult.code;
+            }
+        }
+        
+        // Show the generate deliveries FAB in Entregas tab
+        const fab = document.getElementById('fabGenerar');
+        if (fab) fab.style.display = 'flex';
     }
 }
 
@@ -308,7 +345,22 @@ async function saveCliente(form) {
 async function deleteCliente(id) {
     if (!confirm('¿Eliminar este cliente y sus entregas?')) return;
     const result = await apiCall('entrega', 'delete_cliente', { id });
-    if (result.success) location.reload();
+    if (result.success) {
+        const item = document.getElementById('cliente-' + id);
+        if (item) item.remove();
+        
+        const countSpan = document.querySelector('#tab-clientes .fs-sm.text-muted');
+        if (countSpan) {
+            const match = countSpan.textContent.match(/\d+/);
+            const count = match ? parseInt(match[0]) : 1;
+            countSpan.textContent = `${count - 1} clientes registrados`;
+            
+            if (count - 1 <= 0) {
+                const emptyState = document.getElementById('clientesEmptyState');
+                if (emptyState) emptyState.style.display = 'flex';
+            }
+        }
+    }
 }
 
 // Edit cliente
@@ -348,7 +400,27 @@ function toggleEntregado(id, isEntregado, el) {
         pinModule = 'entrega';
         pinAction = 'toggle_entregado';
         pinData = { id };
-        pinCallback = (res) => location.reload();
+        pinCallback = (res) => {
+            const card = el.closest('.delivery-card');
+            card.classList.remove('entregado');
+            card.dataset.deudor = '0';
+            card.dataset.pagado = '0';
+            
+            el.classList.remove('active-success');
+            el.querySelector('.chip-text').textContent = 'Entregar';
+            el.setAttribute('onclick', `toggleEntregado(${id}, false, this)`);
+            
+            const btnPago = card.querySelectorAll('.toggle-chip')[2];
+            if (btnPago) {
+                btnPago.className = 'toggle-chip';
+                btnPago.innerHTML = `💵 <span class="chip-text">Pagar</span>`;
+                btnPago.setAttribute('onclick', `togglePago(${id}, '', this)`);
+            }
+            
+            closeModal('modalPin');
+            updateEntregaStats();
+            checkCardVisibility(card);
+        };
 
         document.getElementById('modalPinTitle').textContent = '🔐 Revertir Entrega';
         document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular esta entrega';
@@ -365,7 +437,26 @@ function toggleEntregado(id, isEntregado, el) {
     } else {
         // Marcar -> Sin PIN
         apiCall('entrega', 'toggle_entregado', { id }).then(res => {
-            if (res.success) location.reload();
+            if (res.success) {
+                const card = el.closest('.delivery-card');
+                card.classList.add('entregado');
+                card.dataset.deudor = '1';
+                card.dataset.pagado = '0';
+                
+                el.classList.add('active-success');
+                el.querySelector('.chip-text').textContent = 'Entregado ✓';
+                el.setAttribute('onclick', `toggleEntregado(${id}, true, this)`);
+                
+                const btnPago = card.querySelectorAll('.toggle-chip')[2];
+                if (btnPago) {
+                    btnPago.className = 'toggle-chip';
+                    btnPago.innerHTML = `💵 <span class="chip-text">Pagar</span>`;
+                    btnPago.setAttribute('onclick', `togglePago(${id}, 'pendiente', this)`);
+                }
+
+                updateEntregaStats();
+                checkCardVisibility(card);
+            }
         });
     }
 }
@@ -377,17 +468,32 @@ async function toggleArroz(id, el) {
         const isActive = result.con_arroz == 1;
         el.classList.toggle('active-warning', isActive);
         updateEntregaStats();
+        const card = el.closest('.delivery-card');
+        if (card) checkCardVisibility(card);
     }
 }
 
 // Toggle pago
 function togglePago(id, currentState, el) {
+    if (!currentState || currentState === '') return; // Si no hay venta no hace nada
     if (currentState === 'yape') {
         // Revertir a pendiente -> Requiere PIN
         pinModule = 'entrega';
         pinAction = 'toggle_pago';
         pinData = { id };
-        pinCallback = (res) => location.reload();
+        pinCallback = (res) => {
+            const card = el.closest('.delivery-card');
+            card.dataset.deudor = '1';
+            card.dataset.pagado = '0';
+            
+            el.className = 'toggle-chip';
+            el.innerHTML = `💵 <span class="chip-text">Pagar</span>`;
+            el.setAttribute('onclick', `togglePago(${id}, 'pendiente', this)`);
+            
+            closeModal('modalPin');
+            updateEntregaStats();
+            checkCardVisibility(card);
+        };
 
         document.getElementById('modalPinTitle').textContent = '🔐 Revertir Pago';
         document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular este pago';
@@ -404,7 +510,24 @@ function togglePago(id, currentState, el) {
     } else {
         // Marcar -> Sin PIN
         apiCall('entrega', 'toggle_pago', { id }).then(res => {
-            if (res.success) location.reload();
+            if (res.success) {
+                const newState = res.estado_pago;
+                const card = el.closest('.delivery-card');
+                card.dataset.deudor = '0';
+                card.dataset.pagado = '1';
+                
+                if (newState === 'efectivo') {
+                    el.className = 'toggle-chip active-success';
+                    el.innerHTML = `💵 <span class="chip-text">Efectivo</span>`;
+                } else if (newState === 'yape') {
+                    el.className = 'toggle-chip active-primary';
+                    el.innerHTML = `📱 <span class="chip-text">Yape</span>`;
+                }
+                
+                el.setAttribute('onclick', `togglePago(${id}, '${newState}', this)`);
+                updateEntregaStats();
+                checkCardVisibility(card);
+            }
         });
     }
 }
@@ -420,7 +543,9 @@ async function updateEntregaStats() {
             'statPendientes': d.pendientes,
             'statArroz': d.con_arroz,
             'statPagados': d.pagados,
-            'statMonto': 'S/' + parseFloat(d.monto_total || 0).toFixed(2)
+            'statDeudores': d.deudores,
+            'statEsperado': 'S/' + parseFloat(d.monto_esperado || 0).toFixed(2),
+            'statRecaudado': 'S/' + parseFloat(d.monto_recaudado || 0).toFixed(2)
         };
         for (const [id, val] of Object.entries(els)) {
             const el = document.getElementById(id);
@@ -469,6 +594,31 @@ function filterEntregas(filter) {
         }
         card.style.display = show ? '' : 'none';
     });
+}
+
+// Check if a specific card should be hidden based on the active filter
+function checkCardVisibility(card) {
+    const activePill = document.querySelector('.filter-pill.active');
+    if (!activePill) return;
+    const filter = activePill.dataset.filter;
+    if (filter === 'todos') return;
+
+    let show = true;
+    switch (filter) {
+        case 'pendientes': show = !card.classList.contains('entregado'); break;
+        case 'entregados': show = card.classList.contains('entregado'); break;
+        case 'arroz': show = card.dataset.arroz === '1'; break;
+        case 'pagados': show = card.dataset.pagado === '1'; break;
+        case 'deudores': show = card.dataset.deudor === '1'; break;
+    }
+
+    if (!show) {
+        card.classList.add('hide-smoothly');
+        setTimeout(() => {
+            card.style.display = 'none';
+            card.classList.remove('hide-smoothly');
+        }, 300);
+    }
 }
 
 // Generate entregas from clientes
