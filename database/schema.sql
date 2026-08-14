@@ -19,6 +19,29 @@ CREATE TABLE configuracion (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- TABLA: cuadre_caja
+-- Control de apertura/cierre de jornada con estadísticas
+-- ============================================================
+CREATE TABLE cuadre_caja (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hora_apertura DATETIME NOT NULL,
+    hora_cierre DATETIME DEFAULT NULL,
+    monto_total_ventas DECIMAL(10,2) DEFAULT 0.00,
+    gasto_total DECIMAL(10,2) DEFAULT 0.00,
+    ganancia_neta DECIMAL(10,2) DEFAULT 0.00,
+    monto_efectivo DECIMAL(10,2) DEFAULT 0.00,
+    monto_yape DECIMAL(10,2) DEFAULT 0.00,
+    efectivo_contado DECIMAL(10,2) DEFAULT NULL,
+    descuadre DECIMAL(10,2) DEFAULT NULL,
+    estado ENUM('abierto', 'cerrado') DEFAULT 'abierto',
+    total_entregas INT DEFAULT 0,
+    total_con_arroz INT DEFAULT 0,
+    total_pagados INT DEFAULT 0,
+    total_pendientes INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- TABLA: categoria
 -- Categorías de gastos: Abarrotes, Ave Entera, Pasajes, etc.
 -- ============================================================
@@ -32,8 +55,6 @@ CREATE TABLE categoria (
 -- ============================================================
 -- TABLA: producto
 -- Insumos: pollo, papa, lechuga, etc.
--- cantidad y kilo son NULL permitido
--- subtotal = precio_unitario * (cantidad o kilo)
 -- ============================================================
 CREATE TABLE producto (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,8 +66,10 @@ CREATE TABLE producto (
     subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     comprado TINYINT(1) DEFAULT 0,
     fecha_compra DATE DEFAULT NULL,
+    cuadre_caja_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (cuadre_caja_id) REFERENCES cuadre_caja(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -58,9 +81,12 @@ CREATE TABLE egreso_imprevisto (
     descripcion VARCHAR(255) NOT NULL,
     categoria_id INT NOT NULL,
     monto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    fecha DATE DEFAULT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    salio_de_caja TINYINT(1) DEFAULT 1,
+    cuadre_caja_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (cuadre_caja_id) REFERENCES cuadre_caja(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -111,8 +137,6 @@ CREATE TABLE cliente (
 
 -- ============================================================
 -- TABLA: entrega_cliente
--- Tabla operacional principal para jornada en tiempo real
--- Relaciona cliente + platillo + zona + estados de entrega
 -- ============================================================
 CREATE TABLE entrega_cliente (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -138,61 +162,31 @@ CREATE TABLE venta (
     entrega_cliente_id INT NOT NULL,
     cliente_id INT NOT NULL,
     monto DECIMAL(10,2) NOT NULL,
-    estado_pago ENUM('pagado', 'pendiente') DEFAULT 'pendiente',
+    estado_pago ENUM('efectivo', 'yape', 'pendiente') DEFAULT 'pendiente',
     fecha_venta DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cuadre_caja_id INT DEFAULT NULL,
     FOREIGN KEY (entrega_cliente_id) REFERENCES entrega_cliente(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (cliente_id) REFERENCES cliente(id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
--- TABLA: cuadre_caja
--- Control de apertura/cierre de jornada con estadísticas
--- ============================================================
-CREATE TABLE cuadre_caja (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    hora_apertura DATETIME NOT NULL,
-    hora_cierre DATETIME DEFAULT NULL,
-    monto_total_ventas DECIMAL(10,2) DEFAULT 0.00,
-    gasto_total DECIMAL(10,2) DEFAULT 0.00,
-    ganancia_neta DECIMAL(10,2) DEFAULT 0.00,
-    estado ENUM('abierto', 'cerrado') DEFAULT 'abierto',
-    total_entregas INT DEFAULT 0,
-    total_con_arroz INT DEFAULT 0,
-    total_pagados INT DEFAULT 0,
-    total_pendientes INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (cuadre_caja_id) REFERENCES cuadre_caja(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- DATOS INICIALES (SEED)
 -- ============================================================
 
--- Configuración del sistema
 INSERT INTO configuracion (clave, valor) VALUES 
 ('pin_cierre', '1013'),
 ('codigo_cliente_inicio', '0347'),
 ('nombre_evento', 'Pollada Familiar');
 
--- Categorías de gastos
 INSERT INTO categoria (nombre) VALUES 
-('Abarrotes'),
-('Ave Entera'),
-('Pasajes'),
-('Reconocimiento a Personal'),
-('Otros');
+('Abarrotes'), ('Ave Entera'), ('Pasajes'), ('Reconocimiento a Personal'), ('Otros');
 
--- Zonas de entrega
 INSERT INTO zona_entrega (nombre) VALUES 
-('Tumbes'),
-('Puyango'),
-('Frontera');
+('Tumbes'), ('Puyango'), ('Frontera');
 
--- Personal del equipo
 INSERT INTO personal (nombres, participacion) VALUES 
-('Sara', 'inversionista'),
-('Andre', 'inversionista'),
-('Sra. Charito', 'ayudante');
+('Sara', 'inversionista'), ('Andre', 'inversionista'), ('Sra. Charito', 'ayudante');
 
--- Platillo principal
 INSERT INTO platillo (nombre, precio, descripcion, estado) VALUES 
 ('Pollada', 15.00, 'Pollo a la brasa con guarniciones', 'activo');

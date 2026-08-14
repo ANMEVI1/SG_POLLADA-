@@ -38,9 +38,10 @@ $entregas = $pdo->query("
 // Stats
 $totalEntregas = count($entregas);
 $totalEntregados = count(array_filter($entregas, fn($e) => $e['entregado']));
-$totalPendientes = $totalEntregas - $totalEntregados;
+$totalPendientes = $totalEntregas - $totalEntregados; // Pendientes de entrega
 $totalArroz = count(array_filter($entregas, fn($e) => $e['con_arroz']));
-$totalPagados = count(array_filter($entregas, fn($e) => $e['estado_pago'] === 'pagado'));
+$totalPagados = count(array_filter($entregas, fn($e) => $e['estado_pago'] !== 'pendiente'));
+$totalDeudores = count(array_filter($entregas, fn($e) => $e['entregado'] && $e['estado_pago'] === 'pendiente'));
 $montoTotal = array_sum(array_map(fn($e) => $e['entregado'] ? $e['platillo_precio'] : 0, $entregas));
 
 // Next code
@@ -125,6 +126,9 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         <button class="filter-pill" data-filter="pagados" onclick="filterEntregas('pagados')">
             Pagados <span class="filter-count"><?= $totalPagados ?></span>
         </button>
+        <button class="filter-pill" data-filter="deudores" onclick="filterEntregas('deudores')">
+            Deudores <span class="filter-count"><?= $totalDeudores ?></span>
+        </button>
     </div>
 
     <!-- Delivery Cards -->
@@ -144,7 +148,8 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                  data-name="<?= htmlspecialchars($e['cliente_nombre']) ?>"
                  data-address="<?= htmlspecialchars($e['cliente_direccion']) ?>"
                  data-arroz="<?= $e['con_arroz'] ?>"
-                 data-pagado="<?= $e['estado_pago'] === 'pagado' ? '1' : '0' ?>">
+                 data-pagado="<?= $e['estado_pago'] !== 'pendiente' ? '1' : '0' ?>"
+                 data-deudor="<?= ($e['entregado'] && $e['estado_pago'] === 'pendiente') ? '1' : '0' ?>">
                 
                 <div class="dc-top">
                     <div class="dc-code"><?= $e['cliente_codigo'] ?></div>
@@ -158,16 +163,30 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                 
                 <div class="dc-toggles">
                     <div class="toggle-chip <?= $e['entregado'] ? 'active-success' : '' ?>" 
-                         onclick="toggleEntregado(<?= $e['id'] ?>, this)">
+                         onclick="toggleEntregado(<?= $e['id'] ?>, <?= $e['entregado'] ? 'true' : 'false' ?>, this)">
                         <span class="chip-text"><?= $e['entregado'] ? 'Entregado ✓' : 'Entregar' ?></span>
                     </div>
                     <div class="toggle-chip <?= $e['con_arroz'] ? 'active-warning' : '' ?>" 
                          onclick="toggleArroz(<?= $e['id'] ?>, this)">
                         🍚 <span class="chip-text">Arroz</span>
                     </div>
-                    <div class="toggle-chip <?= $e['estado_pago'] === 'pagado' ? 'active-info' : '' ?>" 
-                         onclick="togglePago(<?= $e['id'] ?>, this)">
-                        💵 <span class="chip-text"><?= $e['estado_pago'] === 'pagado' ? 'Pagado ✓' : 'Pagar' ?></span>
+                    <?php
+                    $pagoClass = '';
+                    $pagoText = 'Pagar';
+                    $pagoIcon = '💵';
+                    if ($e['estado_pago'] === 'efectivo') {
+                        $pagoClass = 'active-success';
+                        $pagoText = 'Efectivo';
+                        $pagoIcon = '💵';
+                    } elseif ($e['estado_pago'] === 'yape') {
+                        $pagoClass = 'active-primary';
+                        $pagoText = 'Yape';
+                        $pagoIcon = '📱';
+                    }
+                    ?>
+                    <div class="toggle-chip <?= $pagoClass ?>" 
+                         onclick="togglePago(<?= $e['id'] ?>, '<?= $e['estado_pago'] ?>', this)">
+                        <?= $pagoIcon ?> <span class="chip-text"><?= $pagoText ?></span>
                     </div>
                 </div>
 

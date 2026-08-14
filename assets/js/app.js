@@ -178,6 +178,18 @@ async function deleteEgreso(id) {
 function newEgreso() {
     document.getElementById('formEgreso').reset();
     document.getElementById('egresoId').value = '';
+    document.getElementById('egresoCaja').checked = true;
+    openModal('modalEgreso');
+}
+
+// Edit egreso
+function editEgreso(id, descripcion, categoriaId, monto, fecha, salioCaja) {
+    document.getElementById('egresoId').value = id;
+    document.querySelector('#formEgreso [name="descripcion"]').value = descripcion;
+    document.querySelector('#formEgreso [name="categoria_id"]').value = categoriaId;
+    document.getElementById('egresoMonto').value = monto;
+    document.querySelector('#formEgreso [name="fecha"]').value = fecha ? fecha.substring(0, 10) : '';
+    document.getElementById('egresoCaja').checked = salioCaja == 1;
     openModal('modalEgreso');
 }
 
@@ -269,16 +281,31 @@ function newCliente() {
 }
 
 // Toggle entregado
-async function toggleEntregado(id, el) {
-    const result = await apiCall('entrega', 'toggle_entregado', { id });
-    if (result.success) {
-        const card = el.closest('.delivery-card');
-        const isEntregado = result.entregado == 1;
-        card.classList.toggle('entregado', isEntregado);
-        el.classList.toggle('active-success', isEntregado);
-        el.querySelector('.chip-text').textContent = isEntregado ? 'Entregado ✓' : 'Entregar';
-        if (isEntregado) el.classList.add('animate-pulse');
-        updateEntregaStats();
+function toggleEntregado(id, isEntregado, el) {
+    if (isEntregado) {
+        // Desmarcar -> Requiere PIN
+        pinModule = 'entrega';
+        pinAction = 'toggle_entregado';
+        pinData = { id };
+        pinCallback = (res) => location.reload();
+        
+        document.getElementById('modalPinTitle').textContent = '🔐 Revertir Entrega';
+        document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular esta entrega';
+        document.getElementById('btnSubmitPin').textContent = 'Anular Entrega';
+        document.getElementById('btnSubmitPin').className = 'btn btn-danger';
+        document.getElementById('modalPinExtra').style.display = 'none';
+        
+        document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+        openModal('modalPin');
+        setTimeout(() => {
+            const firstInput = document.querySelector('.pin-input');
+            if (firstInput) firstInput.focus();
+        }, 300);
+    } else {
+        // Marcar -> Sin PIN
+        apiCall('entrega', 'toggle_entregado', { id }).then(res => {
+            if (res.success) location.reload();
+        });
     }
 }
 
@@ -293,13 +320,31 @@ async function toggleArroz(id, el) {
 }
 
 // Toggle pago
-async function togglePago(id, el) {
-    const result = await apiCall('entrega', 'toggle_pago', { id });
-    if (result.success) {
-        const isActive = result.estado_pago === 'pagado';
-        el.classList.toggle('active-info', isActive);
-        el.querySelector('.chip-text').textContent = isActive ? 'Pagado ✓' : 'Pagar';
-        updateEntregaStats();
+function togglePago(id, currentState, el) {
+    if (currentState === 'yape') {
+        // Revertir a pendiente -> Requiere PIN
+        pinModule = 'entrega';
+        pinAction = 'toggle_pago';
+        pinData = { id };
+        pinCallback = (res) => location.reload();
+        
+        document.getElementById('modalPinTitle').textContent = '🔐 Revertir Pago';
+        document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular este pago';
+        document.getElementById('btnSubmitPin').textContent = 'Anular Pago';
+        document.getElementById('btnSubmitPin').className = 'btn btn-danger';
+        document.getElementById('modalPinExtra').style.display = 'none';
+        
+        document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+        openModal('modalPin');
+        setTimeout(() => {
+            const firstInput = document.querySelector('.pin-input');
+            if (firstInput) firstInput.focus();
+        }, 300);
+    } else {
+        // Marcar -> Sin PIN
+        apiCall('entrega', 'toggle_pago', { id }).then(res => {
+            if (res.success) location.reload();
+        });
     }
 }
 
@@ -357,6 +402,9 @@ function filterEntregas(filter) {
             case 'pagados':
                 show = card.dataset.pagado === '1';
                 break;
+            case 'deudores':
+                show = card.dataset.deudor === '1';
+                break;
         }
         card.style.display = show ? '' : 'none';
     });
@@ -381,14 +429,22 @@ async function abrirCaja() {
 }
 
 let pinAction = '';
+let pinModule = 'cuadre';
+let pinData = {};
+let pinCallback = null;
 
 // Abrir caja - show PIN modal
 function solicitarApertura() {
+    pinModule = 'cuadre';
     pinAction = 'abrir_caja';
+    pinData = {};
+    pinCallback = () => location.reload();
+    
     document.getElementById('modalPinTitle').textContent = '🔐 Abrir Jornada';
     document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para abrir la jornada';
     document.getElementById('btnSubmitPin').textContent = '🟢 Abrir Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-success';
+    document.getElementById('modalPinExtra').style.display = 'none';
     
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
@@ -401,11 +457,18 @@ function solicitarApertura() {
 
 // Cerrar caja - show PIN modal
 function solicitarCierre() {
+    pinModule = 'cuadre';
     pinAction = 'cerrar_caja';
+    pinData = {};
+    pinCallback = () => location.reload();
+    
     document.getElementById('modalPinTitle').textContent = '🔐 Cerrar Jornada';
     document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada';
     document.getElementById('btnSubmitPin').textContent = '🔴 Cerrar Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-danger';
+    
+    document.getElementById('modalPinExtra').style.display = 'block';
+    document.getElementById('pinExtraInput').value = '';
     
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
@@ -427,10 +490,21 @@ async function submitPin() {
         return;
     }
     
-    const result = await apiCall('cuadre', pinAction, { pin });
+    const payload = { ...pinData, pin };
+    if (pinAction === 'cerrar_caja') {
+        const fisico = document.getElementById('pinExtraInput').value;
+        if (fisico === '') {
+            showToast('Ingresa el monto de efectivo físico', 'error');
+            return;
+        }
+        payload.efectivo_fisico = fisico;
+    }
+    
+    const result = await apiCall(pinModule, pinAction, payload);
+    
     if (result.success) {
         closeModal('modalPin');
-        location.reload();
+        if (pinCallback) pinCallback(result);
     }
 }
 

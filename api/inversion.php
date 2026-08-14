@@ -64,25 +64,29 @@ switch ($action) {
 
     // ─── EGRESOS ────────────────────────────────────────────
     case 'add_egreso':
-        $stmt = $pdo->prepare("INSERT INTO egreso_imprevisto (descripcion, categoria_id, monto, fecha) VALUES (?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO egreso_imprevisto (descripcion, categoria_id, monto, fecha, salio_de_caja) VALUES (?, ?, ?, ?, ?)");
         $fecha = !empty($_POST['fecha']) ? $_POST['fecha'] : null;
+        $salio_caja = isset($_POST['salio_de_caja']) ? 1 : 0;
         $stmt->execute([
             trim($_POST['descripcion']),
             $_POST['categoria_id'],
             floatval($_POST['monto']),
-            $fecha
+            $fecha,
+            $salio_caja
         ]);
         echo json_encode(['success' => true, 'message' => 'Egreso agregado']);
         break;
 
     case 'edit_egreso':
         $fecha = !empty($_POST['fecha']) ? $_POST['fecha'] : null;
-        $stmt = $pdo->prepare("UPDATE egreso_imprevisto SET descripcion=?, categoria_id=?, monto=?, fecha=? WHERE id=?");
+        $salio_caja = isset($_POST['salio_de_caja']) ? 1 : 0;
+        $stmt = $pdo->prepare("UPDATE egreso_imprevisto SET descripcion=?, categoria_id=?, monto=?, fecha=?, salio_de_caja=? WHERE id=?");
         $stmt->execute([
             trim($_POST['descripcion']),
             $_POST['categoria_id'],
             floatval($_POST['monto']),
             $fecha,
+            $salio_caja,
             $_POST['egreso_id']
         ]);
         echo json_encode(['success' => true, 'message' => 'Egreso actualizado']);

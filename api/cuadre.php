@@ -41,17 +41,32 @@ switch ($action) {
             break;
         }
         
-        // Calculate totals
-        $totalVentas = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta")->fetchColumn();
-        $totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE comprado = 1")->fetchColumn();
-        $totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto")->fetchColumn();
+        $efectivoFisico = isset($_POST['efectivo_fisico']) ? floatval($_POST['efectivo_fisico']) : 0.0;
+        
+        // Aislar jornada
+        $pdo->query("UPDATE venta SET cuadre_caja_id = {$open['id']} WHERE cuadre_caja_id IS NULL");
+        $pdo->query("UPDATE egreso_imprevisto SET cuadre_caja_id = {$open['id']} WHERE cuadre_caja_id IS NULL");
+        $pdo->query("UPDATE producto SET cuadre_caja_id = {$open['id']} WHERE comprado = 1 AND cuadre_caja_id IS NULL");
+        
+        // Calculate totals for THIS shift
+        $totalVentas = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalEfectivo = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'efectivo' AND cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalYape = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'yape' AND cuadre_caja_id = {$open['id']}")->fetchColumn();
+        
+        $totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto WHERE cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $egresosDeCaja = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto WHERE salio_de_caja = 1 AND cuadre_caja_id = {$open['id']}")->fetchColumn();
+        
         $gastoTotal = round($totalProd + $totalEgr, 2);
         $gananciaNeta = round($totalVentas - $gastoTotal, 2);
         
-        $totalEntregas = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE entregado = 1")->fetchColumn();
-        $totalArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE con_arroz = 1 AND entregado = 1")->fetchColumn();
-        $totalPagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pagado'")->fetchColumn();
-        $totalPendientes = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente'")->fetchColumn();
+        $efectivoTeorico = round($totalEfectivo - $egresosDeCaja, 2);
+        $descuadre = round($efectivoFisico - $efectivoTeorico, 2);
+        
+        $totalEntregas = $pdo->query("SELECT COUNT(*) FROM venta WHERE cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente ec JOIN venta v ON v.entrega_cliente_id = ec.id WHERE ec.con_arroz = 1 AND v.cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalPagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago != 'pendiente' AND cuadre_caja_id = {$open['id']}")->fetchColumn();
+        $totalPendientes = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente' AND cuadre_caja_id = {$open['id']}")->fetchColumn();
         
         // Update cuadre
         $stmt = $pdo->prepare("
@@ -60,6 +75,10 @@ switch ($action) {
                 monto_total_ventas = ?,
                 gasto_total = ?,
                 ganancia_neta = ?,
+                monto_efectivo = ?,
+                monto_yape = ?,
+                efectivo_contado = ?,
+                descuadre = ?,
                 estado = 'cerrado',
                 total_entregas = ?,
                 total_con_arroz = ?,
@@ -71,6 +90,10 @@ switch ($action) {
             $totalVentas,
             $gastoTotal,
             $gananciaNeta,
+            $totalEfectivo,
+            $totalYape,
+            $efectivoFisico,
+            $descuadre,
             $totalEntregas,
             $totalArroz,
             $totalPagados,

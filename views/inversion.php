@@ -124,14 +124,15 @@ $porCategoria = $pdo->query("
                 <div class="item-info">
                     <div class="item-name"><?= htmlspecialchars($e['descripcion']) ?></div>
                     <div class="item-meta">
-                        <?= htmlspecialchars($e['categoria_nombre']) ?>
-                        <?php if ($e['fecha']): ?>
-                            · <?= date('d/m/Y', strtotime($e['fecha'])) ?>
+                        <?= date('d/m', strtotime($e['fecha'])) ?> · <?= htmlspecialchars($e['categoria_nombre']) ?>
+                        <?php if ($e['salio_de_caja']): ?>
+                            <span class="badge badge-warning" style="font-size:10px;margin-left:4px">Salió de caja</span>
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="item-price">S/<?= number_format($e['monto'], 2) ?></div>
                 <div class="item-actions">
+                    <span class="fw-700 text-danger mr-8">S/<?= number_format($e['monto'], 2) ?></span>
+                    <button class="btn-icon btn-outline sm" onclick="editEgreso(<?= $e['id'] ?>, '<?= addslashes($e['descripcion']) ?>', <?= $e['categoria_id'] ?>, <?= $e['monto'] ?>, '<?= $e['fecha'] ?>', <?= $e['salio_de_caja'] ?>)">✏️</button>
                     <button class="btn-icon btn-outline sm" onclick="deleteEgreso(<?= $e['id'] ?>)">🗑️</button>
                 </div>
             </div>
@@ -257,7 +258,16 @@ $porCategoria = $pdo->query("
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Monto (S/)</label>
-                        <input type="number" step="0.01" class="form-control" name="monto" placeholder="0.00" required>
+                        <input type="number" class="form-control" name="monto" id="egresoMonto" step="0.10" required>
+                    </div>
+                    <div class="form-group mt-12">
+                        <label class="d-flex align-center gap-8" style="cursor:pointer">
+                            <input type="checkbox" name="salio_de_caja" id="egresoCaja" value="1" checked style="width:18px;height:18px;">
+                            <div>
+                                <div class="fw-600">Salió de Caja</div>
+                                <div class="fs-sm text-muted">El dinero se sacó del canguro de ventas.</div>
+                            </div>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Fecha</label>

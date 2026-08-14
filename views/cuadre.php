@@ -8,19 +8,26 @@
 $cajaAbierta = $pdo->query("SELECT * FROM cuadre_caja WHERE estado = 'abierto' ORDER BY id DESC LIMIT 1")->fetch();
 $historial = $pdo->query("SELECT * FROM cuadre_caja WHERE estado = 'cerrado' ORDER BY id DESC")->fetchAll();
 
-// Stats en vivo (para caja abierta)
-$totalVentas = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta")->fetchColumn();
-$totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE comprado = 1")->fetchColumn();
-$totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto")->fetchColumn();
+// Stats en vivo (para caja en curso o por abrir)
+$totalVentas = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE cuadre_caja_id IS NULL")->fetchColumn();
+$totalEfectivo = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'efectivo' AND cuadre_caja_id IS NULL")->fetchColumn();
+$totalYape = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'yape' AND cuadre_caja_id IS NULL")->fetchColumn();
+
+$totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE comprado = 1 AND cuadre_caja_id IS NULL")->fetchColumn();
+$totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto WHERE cuadre_caja_id IS NULL")->fetchColumn();
+$egresosDeCaja = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto WHERE salio_de_caja = 1 AND cuadre_caja_id IS NULL")->fetchColumn();
+
 $gastoTotal = round($totalProd + $totalEgr, 2);
 $gananciaNeta = round($totalVentas - $gastoTotal, 2);
 
-$totalEntregas = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE entregado = 1")->fetchColumn();
-$totalArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE con_arroz = 1 AND entregado = 1")->fetchColumn();
-$totalPagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pagado'")->fetchColumn();
-$totalPendientes = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente'")->fetchColumn();
-$montoPagado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'pagado'")->fetchColumn();
-$montoPendiente = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'pendiente'")->fetchColumn();
+$efectivoTeorico = round($totalEfectivo - $egresosDeCaja, 2);
+
+$totalEntregas = $pdo->query("SELECT COUNT(*) FROM venta WHERE cuadre_caja_id IS NULL")->fetchColumn();
+$totalArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente ec JOIN venta v ON v.entrega_cliente_id = ec.id WHERE ec.con_arroz = 1 AND v.cuadre_caja_id IS NULL")->fetchColumn();
+$totalPagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago != 'pendiente' AND cuadre_caja_id IS NULL")->fetchColumn();
+$totalPendientes = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente' AND cuadre_caja_id IS NULL")->fetchColumn();
+$montoPagado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago != 'pendiente' AND cuadre_caja_id IS NULL")->fetchColumn();
+$montoPendiente = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago = 'pendiente' AND cuadre_caja_id IS NULL")->fetchColumn();
 
 // Velocidad de venta
 $primeraEntrega = $pdo->query("SELECT MIN(hora_entrega) FROM entrega_cliente WHERE hora_entrega IS NOT NULL")->fetchColumn();
@@ -124,11 +131,15 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
                     <span class="cat-amount">S/<?= number_format($totalVentas, 2) ?></span>
                 </div>
                 <div class="category-bar">
-                    <span class="cat-name">├─ Cobrado</span>
-                    <span class="cat-amount text-success">S/<?= number_format($montoPagado, 2) ?></span>
+                    <span class="cat-name">├─ Efectivo (Billetes/Monedas)</span>
+                    <span class="cat-amount text-success">S/<?= number_format($totalEfectivo, 2) ?></span>
                 </div>
                 <div class="category-bar">
-                    <span class="cat-name">└─ Por cobrar</span>
+                    <span class="cat-name">├─ Yape / Plin</span>
+                    <span class="cat-amount text-primary">S/<?= number_format($totalYape, 2) ?></span>
+                </div>
+                <div class="category-bar">
+                    <span class="cat-name">└─ Por cobrar (Fiado)</span>
                     <span class="cat-amount text-danger">S/<?= number_format($montoPendiente, 2) ?></span>
                 </div>
                 <hr class="divider">
@@ -137,12 +148,24 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
                     <span class="cat-amount">S/<?= number_format($gastoTotal, 2) ?></span>
                 </div>
                 <div class="category-bar">
-                    <span class="cat-name">├─ Productos</span>
+                    <span class="cat-name">├─ Productos Insumos</span>
                     <span class="cat-amount">S/<?= number_format($totalProd, 2) ?></span>
                 </div>
                 <div class="category-bar">
-                    <span class="cat-name">└─ Egresos</span>
+                    <span class="cat-name">└─ Imprevistos</span>
                     <span class="cat-amount">S/<?= number_format($totalEgr, 2) ?></span>
+                </div>
+                <div class="category-bar" style="margin-left: 20px; font-size: 11px; color: var(--text-muted);">
+                    <span class="cat-name">↳ Salieron de la caja:</span>
+                    <span class="cat-amount">S/<?= number_format($egresosDeCaja, 2) ?></span>
+                </div>
+                
+                <div class="summary-card mt-12" style="background:var(--card-bg);border:1px dashed var(--border-color)">
+                    <div class="summary-label" style="color:var(--text)">EFECTIVO TEÓRICO EN CAJA (Billetes)</div>
+                    <div class="summary-value" style="color:var(--primary);font-size:20px;">S/<?= number_format($efectivoTeorico, 2) ?></div>
+                    <div class="summary-detail" style="color:var(--text-muted)">
+                        Ventas Efectivo (S/<?= number_format($totalEfectivo, 2) ?>) - Egresos de caja (S/<?= number_format($egresosDeCaja, 2) ?>)
+                    </div>
                 </div>
                 <?php if ($tiempoVenta): ?>
                 <hr class="divider">
@@ -268,6 +291,12 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
             <button class="modal-close" onclick="closeModal('modalPin')">✕</button>
         </div>
         <div class="modal-body text-center">
+            <div id="modalPinExtra" style="display:none; margin-bottom:16px;">
+                <label class="form-label" style="text-align:left">Efectivo Físico Contado (S/)</label>
+                <input type="number" id="pinExtraInput" class="form-control" step="0.10" placeholder="0.00" style="font-size:20px;text-align:center;">
+                <div class="fs-sm text-muted mt-4">¿Cuántos billetes y monedas hay en total en la caja?</div>
+            </div>
+            
             <p class="text-muted mb-16" style="font-size:13px" id="modalPinDesc">Ingresa el PIN de 4 dígitos</p>
             <div class="pin-input-group">
                 <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">

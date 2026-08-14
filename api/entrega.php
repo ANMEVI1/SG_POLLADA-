@@ -107,12 +107,20 @@ switch ($action) {
                     ->execute([$id, $entrega['cliente_id'], $entrega['precio']]);
             }
         } else {
+            // Desmarcar -> requiere PIN
+            $pinInput = $_POST['pin'] ?? '';
+            $pinReal = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'pin_cierre'")->fetchColumn();
+            if ($pinInput !== $pinReal) {
+                echo json_encode(['success' => false, 'message' => 'PIN incorrecto o requerido para desmarcar']);
+                exit;
+            }
+            
             // Desmarcar -> eliminar venta
             $pdo->prepare("UPDATE entrega_cliente SET entregado = 0, hora_entrega = NULL WHERE id = ?")->execute([$id]);
             $pdo->prepare("DELETE FROM venta WHERE entrega_cliente_id = ?")->execute([$id]);
         }
         
-        echo json_encode(['success' => true, 'entregado' => $newState, 'message' => $newState ? '✓ Entregado' : 'Entrega desmarcada']);
+        echo json_encode(['success' => true, 'entregado' => $newState, 'message' => $newState ? '✓ Entregado' : 'Entrega revertida']);
         break;
 
     case 'toggle_arroz':
@@ -134,9 +142,28 @@ switch ($action) {
             break;
         }
         
-        $newState = $venta['estado_pago'] === 'pagado' ? 'pendiente' : 'pagado';
+        // Ciclo: pendiente -> efectivo -> yape -> pendiente
+        $newState = 'efectivo';
+        if ($venta['estado_pago'] === 'efectivo') $newState = 'yape';
+        if ($venta['estado_pago'] === 'yape') $newState = 'pendiente';
+        
+        // Si va a revertir a pendiente, requiere PIN
+        if ($newState === 'pendiente') {
+            $pinInput = $_POST['pin'] ?? '';
+            $pinReal = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'pin_cierre'")->fetchColumn();
+            if ($pinInput !== $pinReal) {
+                echo json_encode(['success' => false, 'message' => 'PIN requerido para anular pago']);
+                exit;
+            }
+        }
+        
         $pdo->prepare("UPDATE venta SET estado_pago = ? WHERE id = ?")->execute([$newState, $venta['id']]);
-        echo json_encode(['success' => true, 'estado_pago' => $newState, 'message' => $newState === 'pagado' ? '✓ Pagado' : 'Marcado como pendiente']);
+        
+        $msg = 'Pendiente';
+        if ($newState === 'efectivo') $msg = '💵 Efectivo';
+        if ($newState === 'yape') $msg = '📱 Yape';
+        
+        echo json_encode(['success' => true, 'estado_pago' => $newState, 'message' => $msg]);
         break;
 
     // ─── ESTADÍSTICAS ───────────────────────────────────────
