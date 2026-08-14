@@ -10,6 +10,9 @@
  * Compatible con: Laragon, InfinityFree, Railway
  */
 
+// 1. Cargar manejador de errores global
+require_once __DIR__ . '/error_handler.php';
+
 // Cargar credenciales locales si existen
 $env = [];
 $envFile = __DIR__ . '/env.php';

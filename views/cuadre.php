@@ -281,36 +281,6 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL: PIN -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modalPin">
-    <div class="modal">
-        <div class="modal-header">
-            <span class="modal-title" id="modalPinTitle">🔐 Confirmación por PIN</span>
-            <button class="modal-close" onclick="closeModal('modalPin')">✕</button>
-        </div>
-        <div class="modal-body text-center">
-            <div id="modalPinExtra" style="display:none; margin-bottom:16px;">
-                <label class="form-label" style="text-align:left">Efectivo Físico Contado (S/)</label>
-                <input type="number" id="pinExtraInput" class="form-control" step="0.10" placeholder="0.00" style="font-size:20px;text-align:center;">
-                <div class="fs-sm text-muted mt-4">¿Cuántos billetes y monedas hay en total en la caja?</div>
-            </div>
-            
-            <p class="text-muted mb-16" style="font-size:13px" id="modalPinDesc">Ingresa el PIN de 4 dígitos</p>
-            <div class="pin-input-group">
-                <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
-                <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
-                <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
-                <input type="password" class="pin-input" maxlength="1" inputmode="numeric" pattern="\d">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline" onclick="closeModal('modalPin')">Cancelar</button>
-            <button type="button" class="btn btn-danger" id="btnSubmitPin" onclick="submitPin()">Confirmar</button>
-        </div>
-    </div>
-</div>
 
 <script>
 // Cambiar PIN

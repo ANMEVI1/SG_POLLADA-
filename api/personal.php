@@ -14,6 +14,34 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Personal agregado']);
         break;
 
+    case 'edit_personal':
+        // Validar PIN
+        $pinInput = $_POST['pin'] ?? '';
+        $pinReal = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'pin_cierre'")->fetchColumn();
+        if ($pinInput !== $pinReal) {
+            echo json_encode(['success' => false, 'message' => 'PIN incorrecto. Requerido para editar personal.']);
+            exit;
+        }
+        
+        $stmt = $pdo->prepare("UPDATE personal SET nombres = ?, participacion = ? WHERE id = ?");
+        $stmt->execute([trim($_POST['nombres']), $_POST['participacion'], $_POST['id']]);
+        echo json_encode(['success' => true, 'message' => 'Personal actualizado']);
+        break;
+
+    case 'delete_personal':
+        // Validar PIN
+        $pinInput = $_POST['pin'] ?? '';
+        $pinReal = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'pin_cierre'")->fetchColumn();
+        if ($pinInput !== $pinReal) {
+            echo json_encode(['success' => false, 'message' => 'PIN incorrecto. Requerido para eliminar personal.']);
+            exit;
+        }
+        
+        $stmt = $pdo->prepare("DELETE FROM personal WHERE id = ?");
+        $stmt->execute([$_POST['id']]);
+        echo json_encode(['success' => true, 'message' => 'Personal eliminado']);
+        break;
+
     case 'update_reconocimiento':
         $stmt = $pdo->prepare("UPDATE personal SET reconocimiento_monetario = ? WHERE id = ?");
         $stmt->execute([floatval($_POST['monto']), $_POST['id']]);

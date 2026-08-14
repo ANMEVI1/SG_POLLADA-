@@ -57,6 +57,10 @@ $iniciales = [
                 </div>
             </div>
             <div class="card-body">
+                <div class="d-flex justify-end gap-10 mb-12">
+                    <button class="btn-icon btn-outline sm" onclick="editPersonal(<?= $p['id'] ?>, '<?= addslashes($p['nombres']) ?>', '<?= $p['participacion'] ?>')">✏️</button>
+                    <button class="btn-icon btn-outline sm" onclick="deletePersonal(<?= $p['id'] ?>)">🗑️</button>
+                </div>
                 <div class="form-group mb-4">
                     <label class="form-label">Reconocimiento Monetario (S/)</label>
                     <input type="number" step="0.01" class="form-control" 
@@ -163,6 +167,7 @@ $iniciales = [
             <button class="modal-close" onclick="closeModal('modalPersonal')">✕</button>
         </div>
         <form id="formPersonal">
+            <input type="hidden" name="personal_id" id="personalId">
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Nombre(s)</label>

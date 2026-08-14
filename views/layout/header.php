@@ -27,7 +27,17 @@
             echo '<span class="icon">' . $t['icon'] . '</span> ' . $t['text'];
             ?>
         </h1>
-        <span class="header-badge">SG Pollada</span>
+        <div class="header-actions" style="display:flex; align-items:center; gap:10px;">
+            <button class="btn-icon" onclick="openModal('modalQR')" style="color:var(--text); background:rgba(255,255,255,0.2); border-radius:50%; width:36px; height:36px; display:flex; justify-content:center; align-items:center; border:none; cursor:pointer;" title="Mostrar QR">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </button>
+            <span class="header-badge" style="margin-left:0;">SG Pollada</span>
+        </div>
     </header>
 
     <!-- Main Content -->

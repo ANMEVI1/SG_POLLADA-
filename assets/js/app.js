@@ -51,7 +51,7 @@ async function apiCall(page, action, data = {}) {
     for (const [key, value] of Object.entries(data)) {
         formData.append(key, value);
     }
-    
+
     try {
         const response = await fetch(`index.php?page=${page}&api=1&action=${action}`, {
             method: 'POST',
@@ -76,13 +76,13 @@ async function apiCall(page, action, data = {}) {
 // ============================================================
 function switchTab(tabName, groupId) {
     const group = groupId ? document.getElementById(groupId) : document;
-    
+
     // Update pills
     const pills = group ? group.parentElement.querySelectorAll('.tab-pill') : document.querySelectorAll('.tab-pill');
     pills.forEach(pill => {
         pill.classList.toggle('active', pill.dataset.tab === tabName);
     });
-    
+
     // Update content
     const contents = document.querySelectorAll(`.tab-content[data-group="${groupId || 'default'}"]`);
     contents.forEach(content => {
@@ -214,16 +214,77 @@ async function saveReconocimiento(id, el) {
 function newPersonal() {
     const form = document.getElementById('formPersonal');
     if (form) form.reset();
+    document.getElementById('personalId').value = '';
+    document.querySelector('#modalPersonal .modal-title').textContent = 'Añadir Personal';
     openModal('modalPersonal');
 }
 
-async function savePersonal(form) {
+function editPersonal(id, nombres, participacion) {
+    document.getElementById('personalId').value = id;
+    document.querySelector('#formPersonal [name="nombres"]').value = nombres;
+    document.querySelector('#formPersonal [name="participacion"]').value = participacion;
+    document.querySelector('#modalPersonal .modal-title').textContent = 'Editar Personal';
+    openModal('modalPersonal');
+}
+
+function deletePersonal(id) {
+    if (!confirm('¿Eliminar este miembro del equipo?')) return;
+
+    pinModule = 'personal';
+    pinAction = 'delete_personal';
+    pinData = { id };
+    pinCallback = () => location.reload();
+
+    document.getElementById('modalPinTitle').textContent = '🔐 Eliminar Personal';
+    document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular a este miembro';
+    document.getElementById('btnSubmitPin').textContent = 'Eliminar';
+    document.getElementById('btnSubmitPin').className = 'btn btn-danger';
+    document.getElementById('modalPinExtra').style.display = 'none';
+
+    document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+    openModal('modalPin');
+    setTimeout(() => {
+        const firstInput = document.querySelector('.pin-input');
+        if (firstInput) firstInput.focus();
+    }, 300);
+}
+
+function savePersonal(form) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
-    const result = await apiCall('personal', 'add_personal', data);
-    if (result.success) {
-        closeModal('modalPersonal');
-        location.reload();
+
+    if (data.personal_id) {
+        // Edit requires PIN
+        data.id = data.personal_id;
+
+        pinModule = 'personal';
+        pinAction = 'edit_personal';
+        pinData = data;
+        pinCallback = () => {
+            closeModal('modalPersonal');
+            location.reload();
+        };
+
+        document.getElementById('modalPinTitle').textContent = '🔐 Editar Personal';
+        document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para autorizar la edición';
+        document.getElementById('btnSubmitPin').textContent = 'Guardar Cambios';
+        document.getElementById('btnSubmitPin').className = 'btn btn-primary';
+        document.getElementById('modalPinExtra').style.display = 'none';
+
+        document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+        openModal('modalPin');
+        setTimeout(() => {
+            const firstInput = document.querySelector('.pin-input');
+            if (firstInput) firstInput.focus();
+        }, 300);
+    } else {
+        // Add does not require PIN
+        apiCall('personal', 'add_personal', data).then(result => {
+            if (result.success) {
+                closeModal('modalPersonal');
+                location.reload();
+            }
+        });
     }
 }
 
@@ -267,7 +328,7 @@ function newCliente() {
     if (form) form.reset();
     document.getElementById('clienteId').value = '';
     document.getElementById('modalClienteTitle').textContent = 'Nuevo Cliente';
-    
+
     // Get next code
     fetch('index.php?page=entrega&api=1&action=next_code', { method: 'POST' })
         .then(r => r.json())
@@ -276,7 +337,7 @@ function newCliente() {
                 document.getElementById('clienteCodigo').value = data.code;
             }
         });
-    
+
     openModal('modalCliente');
 }
 
@@ -288,13 +349,13 @@ function toggleEntregado(id, isEntregado, el) {
         pinAction = 'toggle_entregado';
         pinData = { id };
         pinCallback = (res) => location.reload();
-        
+
         document.getElementById('modalPinTitle').textContent = '🔐 Revertir Entrega';
         document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular esta entrega';
         document.getElementById('btnSubmitPin').textContent = 'Anular Entrega';
         document.getElementById('btnSubmitPin').className = 'btn btn-danger';
         document.getElementById('modalPinExtra').style.display = 'none';
-        
+
         document.querySelectorAll('.pin-input').forEach(i => i.value = '');
         openModal('modalPin');
         setTimeout(() => {
@@ -327,13 +388,13 @@ function togglePago(id, currentState, el) {
         pinAction = 'toggle_pago';
         pinData = { id };
         pinCallback = (res) => location.reload();
-        
+
         document.getElementById('modalPinTitle').textContent = '🔐 Revertir Pago';
         document.getElementById('modalPinDesc').textContent = 'Ingresa PIN para anular este pago';
         document.getElementById('btnSubmitPin').textContent = 'Anular Pago';
         document.getElementById('btnSubmitPin').className = 'btn btn-danger';
         document.getElementById('modalPinExtra').style.display = 'none';
-        
+
         document.querySelectorAll('.pin-input').forEach(i => i.value = '');
         openModal('modalPin');
         setTimeout(() => {
@@ -386,7 +447,7 @@ function filterEntregas(filter) {
     document.querySelectorAll('.filter-pill[data-filter]').forEach(pill => {
         pill.classList.toggle('active', pill.dataset.filter === filter);
     });
-    
+
     document.querySelectorAll('.delivery-card').forEach(card => {
         let show = true;
         switch (filter) {
@@ -439,13 +500,13 @@ function solicitarApertura() {
     pinAction = 'abrir_caja';
     pinData = {};
     pinCallback = () => location.reload();
-    
+
     document.getElementById('modalPinTitle').textContent = '🔐 Abrir Jornada';
     document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para abrir la jornada';
     document.getElementById('btnSubmitPin').textContent = '🟢 Abrir Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-success';
     document.getElementById('modalPinExtra').style.display = 'none';
-    
+
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
     openModal('modalPin');
@@ -461,15 +522,15 @@ function solicitarCierre() {
     pinAction = 'cerrar_caja';
     pinData = {};
     pinCallback = () => location.reload();
-    
+
     document.getElementById('modalPinTitle').textContent = '🔐 Cerrar Jornada';
     document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada';
     document.getElementById('btnSubmitPin').textContent = '🔴 Cerrar Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-danger';
-    
+
     document.getElementById('modalPinExtra').style.display = 'block';
     document.getElementById('pinExtraInput').value = '';
-    
+
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
     openModal('modalPin');
@@ -484,12 +545,12 @@ async function submitPin() {
     const inputs = document.querySelectorAll('.pin-input');
     let pin = '';
     inputs.forEach(input => pin += input.value);
-    
+
     if (pin.length !== 4) {
         showToast('Ingresa el PIN de 4 dígitos', 'error');
         return;
     }
-    
+
     const payload = { ...pinData, pin };
     if (pinAction === 'cerrar_caja') {
         const fisico = document.getElementById('pinExtraInput').value;
@@ -499,9 +560,9 @@ async function submitPin() {
         }
         payload.efectivo_fisico = fisico;
     }
-    
+
     const result = await apiCall(pinModule, pinAction, payload);
-    
+
     if (result.success) {
         closeModal('modalPin');
         if (pinCallback) pinCallback(result);
@@ -535,7 +596,7 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 document.addEventListener('submit', (e) => {
     const form = e.target;
-    
+
     if (form.id === 'formProducto') {
         e.preventDefault();
         saveProducto(form);
