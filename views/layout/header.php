@@ -36,7 +36,7 @@
                     <rect x="3" y="14" width="7" height="7"></rect>
                 </svg>
             </button>
-            <span class="header-badge" style="margin-left:0;">SG Pollada</span>
+            <span class="header-badge" style="margin-left:0;">SG Pollada V-0.0.0.7</span>
         </div>
     </header>
 

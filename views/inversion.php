@@ -10,18 +10,20 @@ $productos = $pdo->query("
     SELECT p.*, c.nombre AS categoria_nombre 
     FROM producto p 
     JOIN categoria c ON p.categoria_id = c.id 
+    WHERE p.archivado = 0
     ORDER BY p.comprado ASC, c.nombre, p.nombre
 ")->fetchAll();
 $egresos = $pdo->query("
     SELECT e.*, c.nombre AS categoria_nombre 
     FROM egreso_imprevisto e 
     JOIN categoria c ON e.categoria_id = c.id 
+    WHERE e.archivado = 0
     ORDER BY e.created_at DESC
 ")->fetchAll();
 
 // Totales
-$totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE comprado = 1")->fetchColumn();
-$totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto")->fetchColumn();
+$totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM producto WHERE comprado = 1 AND archivado = 0")->fetchColumn();
+$totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM egreso_imprevisto WHERE archivado = 0")->fetchColumn();
 $granTotal = round($totalProd + $totalEgr, 2);
 
 // Totales por categoría

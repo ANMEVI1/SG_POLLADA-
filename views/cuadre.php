@@ -84,7 +84,7 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
                 🟢 Abrir Jornada
             </button>
         <?php else: ?>
-            <button class="btn btn-danger btn-block" onclick="solicitarCierre()">
+            <button class="btn btn-danger btn-block" onclick="openModal('modalTipoCierre')">
                 🔴 Cerrar Jornada (Cuadrar)
             </button>
         <?php endif; ?>
@@ -250,6 +250,10 @@ if ($primeraEntrega && $ultimaEntrega && $totalEntregas > 0) {
                             <div class="fw-700 text-danger" style="font-size:16px"><?= $h['total_pendientes'] ?></div>
                             <div class="fs-sm text-muted">Pend.</div>
                         </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; border-top: 1px dashed var(--border-light); padding-top: 15px;">
+                        <a href="api/reporte_pdf.php?cuadre_id=<?= $h['id'] ?>" target="_blank" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 14px; padding: 10px; color: var(--primary); border-color: var(--primary);">📄 Ver Completo (PDF)</a>
                     </div>
                 </div>
             </div>

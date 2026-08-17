@@ -217,14 +217,35 @@ switch ($action) {
 
     // ─── ESTADÍSTICAS ───────────────────────────────────────
     case 'get_stats':
-        $total = $pdo->query("SELECT COUNT(*) FROM entrega_cliente")->fetchColumn();
-        $entregados = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE entregado = 1")->fetchColumn();
-        $conArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE con_arroz = 1")->fetchColumn();
-        $pagados = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago != 'pendiente'")->fetchColumn();
-        $deudores = $pdo->query("SELECT COUNT(*) FROM venta WHERE estado_pago = 'pendiente'")->fetchColumn();
+        $total = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE archivado = 0")->fetchColumn();
+        $entregados = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE entregado = 1 AND archivado = 0")->fetchColumn();
+        $conArroz = $pdo->query("SELECT COUNT(*) FROM entrega_cliente WHERE con_arroz = 1 AND archivado = 0")->fetchColumn();
         
-        $montoEsperado = $pdo->query("SELECT COALESCE(SUM(p.precio), 0) FROM entrega_cliente ec JOIN platillo p ON ec.platillo_id = p.id")->fetchColumn();
-        $montoRecaudado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM venta WHERE estado_pago != 'pendiente'")->fetchColumn();
+        $pagados = $pdo->query("
+            SELECT COUNT(*) FROM venta v 
+            JOIN entrega_cliente ec ON v.entrega_cliente_id = ec.id 
+            WHERE v.estado_pago != 'pendiente' AND ec.archivado = 0
+        ")->fetchColumn();
+        
+        $deudores = $pdo->query("
+            SELECT COUNT(*) FROM venta v 
+            JOIN entrega_cliente ec ON v.entrega_cliente_id = ec.id 
+            WHERE v.estado_pago = 'pendiente' AND ec.archivado = 0
+        ")->fetchColumn();
+        
+        $montoEsperado = $pdo->query("
+            SELECT COALESCE(SUM(p.precio), 0) 
+            FROM entrega_cliente ec 
+            JOIN platillo p ON ec.platillo_id = p.id 
+            WHERE ec.archivado = 0
+        ")->fetchColumn();
+        
+        $montoRecaudado = $pdo->query("
+            SELECT COALESCE(SUM(v.monto), 0) 
+            FROM venta v 
+            JOIN entrega_cliente ec ON v.entrega_cliente_id = ec.id 
+            WHERE v.estado_pago != 'pendiente' AND ec.archivado = 0
+        ")->fetchColumn();
         
         echo json_encode([
             'success' => true,
@@ -235,8 +256,8 @@ switch ($action) {
                 'con_arroz' => $conArroz,
                 'pagados' => $pagados,
                 'deudores' => $deudores,
-                'monto_esperado' => $montoEsperado,
-                'monto_recaudado' => $montoRecaudado
+                'monto_esperado' => number_format((float)$montoEsperado, 2, '.', ''),
+                'monto_recaudado' => number_format((float)$montoRecaudado, 2, '.', '')
             ]
         ]);
         break;

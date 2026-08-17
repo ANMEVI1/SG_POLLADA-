@@ -25,6 +25,7 @@ switch ($action) {
         break;
 
     case 'cerrar_caja':
+    case 'cerrar_caja_hard':
         $pin = $_POST['pin'] ?? '';
         
         // Verify PIN
@@ -43,7 +44,7 @@ switch ($action) {
         
         $efectivoFisico = isset($_POST['efectivo_fisico']) ? floatval($_POST['efectivo_fisico']) : 0.0;
         
-        // Aislar jornada
+        // Aislar jornada (esto vincula los registros sueltos al cuadre actual)
         $pdo->query("UPDATE venta SET cuadre_caja_id = {$open['id']} WHERE cuadre_caja_id IS NULL");
         $pdo->query("UPDATE egreso_imprevisto SET cuadre_caja_id = {$open['id']} WHERE cuadre_caja_id IS NULL");
         $pdo->query("UPDATE producto SET cuadre_caja_id = {$open['id']} WHERE comprado = 1 AND cuadre_caja_id IS NULL");
@@ -101,7 +102,21 @@ switch ($action) {
             $open['id']
         ]);
         
-        echo json_encode(['success' => true, 'message' => '🔴 Jornada cerrada exitosamente']);
+        // Ejecutar borrado lógico según el tipo de cierre
+        if ($action === 'cerrar_caja_hard') {
+            // Archivar absolutamente todo
+            $pdo->query("UPDATE entrega_cliente SET archivado = 1 WHERE archivado = 0");
+            $pdo->query("UPDATE cliente SET archivado = 1 WHERE archivado = 0");
+            $pdo->query("UPDATE producto SET archivado = 1 WHERE archivado = 0");
+            $pdo->query("UPDATE egreso_imprevisto SET archivado = 1 WHERE archivado = 0");
+            $msg = '🔴 Jornada Cerrada y Datos Limpiados (Hard Reset)';
+        } else {
+            // Cierre normal: solo limpia la interfaz de entregas
+            $pdo->query("UPDATE entrega_cliente SET archivado = 1 WHERE archivado = 0");
+            $msg = '🔴 Jornada Cerrada (Clientes intactos)';
+        }
+        
+        echo json_encode(['success' => true, 'message' => $msg]);
         break;
 
     case 'update_pin':

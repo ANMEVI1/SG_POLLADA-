@@ -13,6 +13,7 @@ $clientes = $pdo->query("
     SELECT c.*, z.nombre AS zona_nombre 
     FROM cliente c 
     LEFT JOIN zona_entrega z ON c.zona_entrega_id = z.id 
+    WHERE c.archivado = 0
     ORDER BY c.codigo_4digitos
 ")->fetchAll();
 
@@ -32,6 +33,7 @@ $entregas = $pdo->query("
     JOIN platillo p ON ec.platillo_id = p.id
     LEFT JOIN zona_entrega z ON ec.zona_entrega_id = z.id
     LEFT JOIN venta v ON v.entrega_cliente_id = ec.id
+    WHERE ec.archivado = 0
     ORDER BY ec.entregado ASC, c.codigo_4digitos ASC
 ")->fetchAll();
 

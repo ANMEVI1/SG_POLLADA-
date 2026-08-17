@@ -602,6 +602,20 @@ async function updateEntregaStats() {
             const el = document.getElementById(id);
             if (el) el.textContent = val;
         }
+
+        // Update filter pill counts
+        const pillMap = {
+            'todos': d.total,
+            'pendientes': d.pendientes,
+            'entregados': d.entregados,
+            'arroz': d.con_arroz,
+            'pagados': d.pagados,
+            'deudores': d.deudores
+        };
+        for (const [filterKey, val] of Object.entries(pillMap)) {
+            const pillSpan = document.querySelector(`.filter-pill[data-filter="${filterKey}"] .filter-count`);
+            if (pillSpan) pillSpan.textContent = val;
+        }
     }
 }
 
@@ -717,15 +731,20 @@ function solicitarApertura() {
     }, 300);
 }
 
-// Cerrar caja - show PIN modal
-function solicitarCierre() {
+function solicitarCierre(actionType = 'cerrar_caja') {
     pinModule = 'cuadre';
-    pinAction = 'cerrar_caja';
+    pinAction = actionType;
     pinData = {};
     pinCallback = () => location.reload();
 
-    document.getElementById('modalPinTitle').textContent = '🔐 Cerrar Jornada';
-    document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada';
+    document.getElementById('modalPinTitle').textContent = '🔒 Cerrar Jornada';
+    
+    if (actionType === 'cerrar_caja_hard') {
+        document.getElementById('modalPinDesc').innerHTML = '<span class="text-danger fw-bold">⚠️ ATENCIÓN: Se ocultarán todos los clientes y entregas para empezar desde cero.</span><br>Ingresa tu PIN:';
+    } else {
+        document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada (Los clientes se mantendrán para el siguiente turno)';
+    }
+    
     document.getElementById('btnSubmitPin').textContent = '🔴 Cerrar Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-danger';
 
@@ -734,6 +753,13 @@ function solicitarCierre() {
 
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+    
+    // Si modalTipoCierre está abierto, cerrarlo primero
+    const modalTipo = document.getElementById('modalTipoCierre');
+    if (modalTipo && modalTipo.classList.contains('active')) {
+        closeModal('modalTipoCierre');
+    }
+    
     openModal('modalPin');
     setTimeout(() => {
         const firstInput = document.querySelector('.pin-input');
@@ -753,7 +779,7 @@ async function submitPin() {
     }
 
     const payload = { ...pinData, pin };
-    if (pinAction === 'cerrar_caja') {
+    if (pinAction === 'cerrar_caja' || pinAction === 'cerrar_caja_hard') {
         const fisico = document.getElementById('pinExtraInput').value;
         if (fisico === '') {
             showToast('Ingresa el monto de efectivo físico', 'error');

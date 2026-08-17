@@ -100,8 +100,8 @@ switch ($action) {
 
     // ─── TOTALES ────────────────────────────────────────────
     case 'get_totales':
-        $totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) AS total FROM producto WHERE comprado = 1")->fetch()['total'];
-        $totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) AS total FROM egreso_imprevisto")->fetch()['total'];
+        $totalProd = $pdo->query("SELECT COALESCE(SUM(subtotal), 0) AS total FROM producto WHERE comprado = 1 AND archivado = 0")->fetch()['total'];
+        $totalEgr = $pdo->query("SELECT COALESCE(SUM(monto), 0) AS total FROM egreso_imprevisto WHERE archivado = 0")->fetch()['total'];
         echo json_encode([
             'success' => true,
             'data' => [

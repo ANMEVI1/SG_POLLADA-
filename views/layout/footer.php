@@ -20,6 +20,35 @@
         </a>
     </nav>
 
+    <!-- MODAL: TIPO DE CIERRE -->
+    <div class="modal-overlay" id="modalTipoCierre">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🔴 Opciones de Cierre</span>
+                <button class="modal-close" onclick="closeModal('modalTipoCierre')">✕</button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted" style="font-size:14px; margin-bottom:20px;">
+                    ¿Qué tipo de cierre deseas realizar?
+                </p>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button class="btn btn-primary" onclick="solicitarCierre('cerrar_caja')" style="width:100%; justify-content:center;">
+                        <div>
+                            <div style="font-weight:bold; font-size:15px;">🔒 Cerrar Normal</div>
+                            <div style="font-size:11px; font-weight:normal;">Limpia Entregas, Conserva Clientes/Productos</div>
+                        </div>
+                    </button>
+                    <button class="btn btn-danger btn-outline" onclick="solicitarCierre('cerrar_caja_hard')" style="width:100%; justify-content:center;">
+                        <div>
+                            <div style="font-weight:bold; font-size:15px;">🗑️ Cerrar y Limpiar Todo (Reset)</div>
+                            <div style="font-size:11px; font-weight:normal;">Oculta absolutamente TODO. Empezar de cero.</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: PIN -->
     <div class="modal-overlay" id="modalPin">
         <div class="modal">
