@@ -20,6 +20,64 @@
         </a>
     </nav>
 
+    <!-- MODAL: AYUDA / TUTORIAL -->
+    <div class="modal-overlay" id="modalAyuda">
+        <div class="modal" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <span class="modal-title" style="color: var(--primary);">📖 Manual del Sistema</span>
+                <button class="modal-close" onclick="closeModal('modalAyuda')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; text-align: left; background: #f8f9fa; padding: 16px;">
+                
+                <h4 style="color:var(--primary); margin-top:0; font-size:15px;">🚀 1. Abrir y Cerrar el Día</h4>
+                <div class="card" style="margin-bottom:16px; padding:12px; font-size:13px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="margin-top:0;">Para empezar a trabajar, ve a la pestaña <b>Cuadre</b> y abre la caja. Al terminar, usa el botón "Cierre de Jornada":</p>
+                    <ul style="margin:8px 0; padding-left:20px; line-height:1.5;">
+                        <li><b>🔒 Cierre Normal:</b> Limpia las ventas de hoy, pero guarda a tus clientes para venderles mañana sin volver a escribirlos.</li>
+                        <li><b>🗑️ Hard Reset:</b> Borra TODO. Úsalo cuando la actividad termine por completo y quieras empezar otra pollada desde cero el otro mes.</li>
+                    </ul>
+                </div>
+
+                <h4 style="color:var(--primary); font-size:15px;">🍗 2. Despacho y Entregas</h4>
+                <div class="card" style="margin-bottom:16px; padding:12px; font-size:13px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="margin-top:0;">En la pestaña <b>Entregas</b> ves quién falta recoger su pedido. Usa los filtros rápidos de arriba (Pendientes, Con Arroz) para agilizar el despacho.</p>
+                    
+                    <b style="color:#d32f2f;">Los Botones Mágicos:</b>
+                    <ul style="margin:8px 0; padding-left:20px; line-height:1.5;">
+                        <li><b>📦 Entregar:</b> Tócalo al dar la comida. Se pondrá Verde.</li>
+                        <li><b>🍚 Arroz:</b> Tócalo si el cliente pidió su porción con arroz en lugar de papas.</li>
+                        <li><b>💵 Pagar:</b> Registra cómo te pagaron:
+                            <br>👉 <i>1er toque:</i> Cambia a <b>Efectivo</b>.
+                            <br>👉 <i>2do toque:</i> Cambia a <b>Yape/Lemon</b> y abre un cuadro con tu código QR en la pantalla para que el cliente lo escanee y pague.
+                            <br>👉 <i>3er toque:</i> Si te equivocaste y quieres regresarlo a "Debe dinero", te pedirá la contraseña (PIN) por seguridad.
+                        </li>
+                    </ul>
+                </div>
+
+                <h4 style="color:var(--primary); font-size:15px;">🎟️ 3. Tickets por WhatsApp</h4>
+                <div class="card" style="margin-bottom:16px; padding:12px; font-size:13px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="margin-top:0; margin-bottom:0;">En la pestaña <b>Entregas</b> toca la sub-pestaña <b>👤 Clientes</b>. Verás un botón de diálogo verde (💬). Tócalo, pon el número de celular del cliente y envíale automáticamente su comprobante digital en PDF. No tienes que guardar el número en tus contactos.</p>
+                </div>
+
+                <h4 style="color:var(--primary); font-size:15px;">💰 4. Registro de Gastos</h4>
+                <div class="card" style="margin-bottom:16px; padding:12px; font-size:13px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="margin-top:0;">Todo dinero que sale de caja se anota en <b>Inversión</b>:</p>
+                    <ul style="margin:8px 0 0 0; padding-left:20px; line-height:1.5;">
+                        <li><b>Productos:</b> Cosas grandes (Pollo, Papas, Aceite).</li>
+                        <li><b>Imprevistos:</b> Dinero rápido de último minuto (Taxi, Hielo, etc).</li>
+                    </ul>
+                </div>
+
+                <p style="text-align:center; color:#888; font-size:12px; margin-top:20px;">
+                    Todo lo que hagas aquí aparecerá mágicamente sumado en tu <b>PDF del Cuadre Final</b>. ¡Tú tienes el control!
+                </p>
+            </div>
+            <div class="modal-footer" style="padding:16px;">
+                <button type="button" class="btn btn-primary" onclick="closeModal('modalAyuda')" style="width:100%; border-radius:12px; padding:12px;">¡Entendido, a trabajar!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: TIPO DE CIERRE -->
     <div class="modal-overlay" id="modalTipoCierre">
         <div class="modal">
@@ -45,6 +103,33 @@
                         </div>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: WHATSAPP TICKET -->
+    <div class="modal-overlay" id="modalWhatsAppTicket">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" style="color: #25D366;">💬 Enviar Ticket Digital</span>
+                <button class="modal-close" onclick="closeModal('modalWhatsAppTicket')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted fs-sm mb-16">
+                    Se abrirá WhatsApp para enviar el ticket <strong id="waTicketCode"></strong> a <strong id="waTicketName"></strong>.
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Número de Teléfono (WhatsApp)</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" class="form-control" value="+51" disabled style="width: 60px; text-align: center; background: #eee;">
+                        <input type="number" id="waPhoneNumber" class="form-control" placeholder="987654321" style="flex: 1;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
+                <button type="button" class="btn btn-primary" id="btnDescargarTicket" style="flex: 1;" onclick="descargarTicketPDF(this)">⬇️ 1. Descargar Ticket</button>
+                <button type="button" class="btn btn-primary" id="btnEnviarWA" style="background: #25D366; border-color: #25D366; flex: 1; opacity: 0.5;" disabled onclick="abrirChatWhatsApp(this)">💬 2. Abrir WhatsApp</button>
+                <button type="button" class="btn btn-outline" style="width: 100%;" onclick="closeModal('modalWhatsAppTicket')">Cancelar</button>
             </div>
         </div>
     </div>

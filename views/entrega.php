@@ -273,6 +273,8 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                     </div>
                 </div>
                 <div class="item-actions">
+                    <button class="btn-icon btn-outline sm" style="color: #25D366; border-color: #25D366;" 
+                            onclick="abrirModalTicket(<?= $c['id'] ?>, '<?= $c['codigo_4digitos'] ?>', '<?= addslashes($c['nombre']) ?>')" title="Enviar Ticket por WhatsApp">💬</button>
                     <button class="btn-icon btn-outline sm" 
                             onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>')">✏️</button>
                     <button class="btn-icon btn-outline sm" onclick="deleteCliente(<?= $c['id'] ?>)">🗑️</button>

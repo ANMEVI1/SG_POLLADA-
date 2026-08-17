@@ -363,6 +363,86 @@ async function deleteCliente(id) {
     }
 }
 
+// ─── TICKETS WHATSAPP ───────────────────────────────────────
+let waCurrentId = null;
+let waCurrentName = '';
+let waCurrentCode = '';
+
+function abrirModalTicket(id, codigo, nombre) {
+    waCurrentId = id;
+    waCurrentName = nombre;
+    waCurrentCode = codigo;
+    
+    document.getElementById('waTicketCode').textContent = codigo;
+    document.getElementById('waTicketName').textContent = nombre;
+    document.getElementById('waPhoneNumber').value = '';
+    
+    // Reset buttons
+    const btnD = document.getElementById('btnDescargarTicket');
+    const btnW = document.getElementById('btnEnviarWA');
+    if (btnD) { btnD.innerHTML = '⬇️ 1. Descargar Ticket'; btnD.disabled = false; }
+    if (btnW) { btnW.disabled = true; btnW.style.opacity = '0.5'; }
+    
+    openModal('modalWhatsAppTicket');
+    setTimeout(() => document.getElementById('waPhoneNumber').focus(), 300);
+}
+
+async function descargarTicketPDF(btn) {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Descargando... ⏳';
+    btn.disabled = true;
+
+    try {
+        const baseUrl = window.location.origin + window.location.pathname.replace('index.php', '');
+        const ticketUrl = baseUrl + 'api/ticket_pdf.php?id=' + waCurrentId;
+        
+        const response = await fetch(ticketUrl);
+        if (!response.ok) throw new Error('Error en el servidor');
+        
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        
+        const cleanName = waCurrentName.replace(/[^A-Za-z0-9_\-]/g, '').replace(/\s+/g, '_');
+        downloadLink.download = `Ticket_${waCurrentCode}_${cleanName}.pdf`;
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        btn.innerHTML = '✅ Ticket Descargado';
+        
+        // Desbloquear botón WhatsApp
+        const btnW = document.getElementById('btnEnviarWA');
+        if (btnW) {
+            btnW.disabled = false;
+            btnW.style.opacity = '1';
+        }
+        
+    } catch (error) {
+        showToast('Ocurrió un error al descargar', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+function abrirChatWhatsApp() {
+    const phone = document.getElementById('waPhoneNumber').value.trim();
+    if (!phone) {
+        showToast('Ingresa el número primero', 'error');
+        document.getElementById('waPhoneNumber').focus();
+        return;
+    }
+    
+    const text = `Hola ${waCurrentName}, gracias por tu apoyo. Aquí te envío adjunto tu ticket para la pollada 🍗🎫`;
+    const fullPhone = '+51' + phone;
+    const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    
+    window.open(waUrl, '_blank');
+    closeModal('modalWhatsAppTicket');
+}
+
 // Edit cliente
 function editCliente(id, nombre, direccion, codigo, zonaId) {
     document.getElementById('clienteId').value = id;
