@@ -60,6 +60,35 @@
         </div>
     </div>
 
-    <script src="assets/js/app.js"></script>
+    <!-- Modal Pago Yape/Lemon -->
+    <div class="modal-overlay" id="modalPagoQR" style="z-index: 9999; background: rgba(0,0,0,0.9);">
+        <div class="modal" style="background: transparent; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; max-height: 100vh; border-radius: 0; padding: 20px; position: relative;">
+            
+            <button onclick="closeModal('modalPagoQR')" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer;">✕</button>
+
+            <div style="background: white; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; width: 300px; max-width: 90vw; position: relative;">
+                
+                <h3 style="color: #333; margin: 0 0 5px 0; font-size: 18px; text-align: center; text-transform: uppercase;">Carlo Andre Mestanza</h3>
+                <p style="color: var(--primary); margin: 0 0 15px 0; font-size: 24px; font-weight: 800; text-align: center; letter-spacing: 1px;">937 660 922</p>
+                
+                <!-- Carousel Container -->
+                <div style="position: relative; width: 100%; display: flex; justify-content: center; align-items: center;">
+                    
+                    <button onclick="prevQR()" style="position: absolute; left: -20px; background: var(--primary); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10; font-size: 18px;">◄</button>
+                    
+                    <img id="pagoQRImg" src="assets/qr/pagos_qr/metodo_yape.jpeg" alt="QR Code Pago" style="width: 250px; height: 250px; max-width: 100%; object-fit: contain; border-radius: 10px; transition: opacity 0.3s ease-in-out;">
+                    
+                    <button onclick="nextQR()" style="position: absolute; right: -20px; background: var(--primary); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10; font-size: 18px;">►</button>
+                </div>
+
+                <p id="pagoQRLabel" style="color: #666; margin: 15px 0 20px 0; font-size: 15px; text-align: center; font-weight: 600;">Yape / Plin</p>
+                
+                <button class="btn btn-primary" onclick="confirmarPagoQR()" style="width: 100%; font-size: 16px; padding: 14px; border-radius: 12px; box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3); justify-content: center;">✅ Pago realizado</button>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js?v=<?= time() ?>"></script>
 </body>
 </html>

@@ -298,20 +298,20 @@ async function saveCliente(form) {
     const isEdit = !!data.cliente_id;
     const action = isEdit ? 'edit_cliente' : 'add_cliente';
     const actionType = document.getElementById('clienteActionType') ? document.getElementById('clienteActionType').value : 'salir';
-    
+
     const result = await apiCall('entrega', action, data);
     if (result.success && result.html) {
         const listContainer = document.getElementById('clientesList');
         const emptyState = document.getElementById('clientesEmptyState');
-        
+
         if (emptyState) emptyState.style.display = 'none';
-        
+
         if (isEdit) {
             const existingItem = document.getElementById('cliente-' + result.id);
             if (existingItem) existingItem.outerHTML = result.html;
         } else {
             if (listContainer) listContainer.insertAdjacentHTML('beforeend', result.html);
-            
+
             const countSpan = document.querySelector('#tab-clientes .fs-sm.text-muted');
             if (countSpan) {
                 const match = countSpan.textContent.match(/\d+/);
@@ -327,14 +327,14 @@ async function saveCliente(form) {
             document.getElementById('clienteNombre').value = '';
             document.getElementById('clienteDireccion').value = '';
             document.getElementById('clienteNombre').focus();
-            
+
             // Consultar a la BD el código secuencial estricto (+1 real)
             const codeResult = await apiCall('entrega', 'next_code');
             if (codeResult && codeResult.success) {
                 document.getElementById('clienteCodigo').value = codeResult.code;
             }
         }
-        
+
         // Show the generate deliveries FAB in Entregas tab
         const fab = document.getElementById('fabGenerar');
         if (fab) fab.style.display = 'flex';
@@ -348,13 +348,13 @@ async function deleteCliente(id) {
     if (result.success) {
         const item = document.getElementById('cliente-' + id);
         if (item) item.remove();
-        
+
         const countSpan = document.querySelector('#tab-clientes .fs-sm.text-muted');
         if (countSpan) {
             const match = countSpan.textContent.match(/\d+/);
             const count = match ? parseInt(match[0]) : 1;
             countSpan.textContent = `${count - 1} clientes registrados`;
-            
+
             if (count - 1 <= 0) {
                 const emptyState = document.getElementById('clientesEmptyState');
                 if (emptyState) emptyState.style.display = 'flex';
@@ -405,18 +405,18 @@ function toggleEntregado(id, isEntregado, el) {
             card.classList.remove('entregado');
             card.dataset.deudor = '0';
             card.dataset.pagado = '0';
-            
+
             el.classList.remove('active-success');
             el.querySelector('.chip-text').textContent = 'Entregar';
             el.setAttribute('onclick', `toggleEntregado(${id}, false, this)`);
-            
+
             const btnPago = card.querySelectorAll('.toggle-chip')[2];
             if (btnPago) {
                 btnPago.className = 'toggle-chip';
                 btnPago.innerHTML = `💵 <span class="chip-text">Pagar</span>`;
                 btnPago.setAttribute('onclick', `togglePago(${id}, '', this)`);
             }
-            
+
             closeModal('modalPin');
             updateEntregaStats();
             checkCardVisibility(card);
@@ -442,11 +442,11 @@ function toggleEntregado(id, isEntregado, el) {
                 card.classList.add('entregado');
                 card.dataset.deudor = '1';
                 card.dataset.pagado = '0';
-                
+
                 el.classList.add('active-success');
                 el.querySelector('.chip-text').textContent = 'Entregado ✓';
                 el.setAttribute('onclick', `toggleEntregado(${id}, true, this)`);
-                
+
                 const btnPago = card.querySelectorAll('.toggle-chip')[2];
                 if (btnPago) {
                     btnPago.className = 'toggle-chip';
@@ -473,9 +473,12 @@ async function toggleArroz(id, el) {
     }
 }
 
-// Toggle pago
+// Intercept pago para mostrar modal de Yape
 function togglePago(id, currentState, el) {
-    if (!currentState || currentState === '') return; // Si no hay venta no hace nada
+    if (!currentState || currentState === '') {
+        showToast('Primero marca la pollada como Entregada', 'error');
+        return;
+    }
     if (currentState === 'yape') {
         // Revertir a pendiente -> Requiere PIN
         pinModule = 'entrega';
@@ -485,11 +488,11 @@ function togglePago(id, currentState, el) {
             const card = el.closest('.delivery-card');
             card.dataset.deudor = '1';
             card.dataset.pagado = '0';
-            
+
             el.className = 'toggle-chip';
             el.innerHTML = `💵 <span class="chip-text">Pagar</span>`;
             el.setAttribute('onclick', `togglePago(${id}, 'pendiente', this)`);
-            
+
             closeModal('modalPin');
             updateEntregaStats();
             checkCardVisibility(card);
@@ -507,29 +510,77 @@ function togglePago(id, currentState, el) {
             const firstInput = document.querySelector('.pin-input');
             if (firstInput) firstInput.focus();
         }, 300);
+    } else if (currentState === 'efectivo') {
+        // Interceptar paso de efectivo -> yape para mostrar modal QR
+        window.currentPagoId = id;
+        window.currentPagoEl = el;
+        currentQrIndex = 1; // 1 = Yape
+        updateQRView();
+        openModal('modalPagoQR');
     } else {
-        // Marcar -> Sin PIN
-        apiCall('entrega', 'toggle_pago', { id }).then(res => {
-            if (res.success) {
-                const newState = res.estado_pago;
-                const card = el.closest('.delivery-card');
-                card.dataset.deudor = '0';
-                card.dataset.pagado = '1';
-                
-                if (newState === 'efectivo') {
-                    el.className = 'toggle-chip active-success';
-                    el.innerHTML = `💵 <span class="chip-text">Efectivo</span>`;
-                } else if (newState === 'yape') {
-                    el.className = 'toggle-chip active-primary';
-                    el.innerHTML = `📱 <span class="chip-text">Yape</span>`;
-                }
-                
-                el.setAttribute('onclick', `togglePago(${id}, '${newState}', this)`);
-                updateEntregaStats();
-                checkCardVisibility(card);
-            }
-        });
+        // Marcar -> Sin PIN (pendiente -> efectivo)
+        doTogglePagoAPI(id, el);
     }
+}
+
+// Logic for QR Carousel
+const qrImages = [
+    { src: 'assets/qr/pagos_qr/metodo_lemon.jpeg', label: 'Billetera Móvil / Lemon / Dale' },
+    { src: 'assets/qr/pagos_qr/metodo_yape.jpeg', label: 'Yape / Plin' }
+];
+let currentQrIndex = 1; // Default to Yape
+
+function updateQRView() {
+    const img = document.getElementById('pagoQRImg');
+    const label = document.getElementById('pagoQRLabel');
+    if (img && label) {
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = qrImages[currentQrIndex].src;
+            label.textContent = qrImages[currentQrIndex].label;
+            img.style.opacity = 1;
+        }, 150);
+    }
+}
+
+function nextQR() {
+    currentQrIndex = (currentQrIndex + 1) % qrImages.length;
+    updateQRView();
+}
+
+function prevQR() {
+    currentQrIndex = (currentQrIndex - 1 + qrImages.length) % qrImages.length;
+    updateQRView();
+}
+
+function confirmarPagoQR() {
+    closeModal('modalPagoQR');
+    if (window.currentPagoId && window.currentPagoEl) {
+        doTogglePagoAPI(window.currentPagoId, window.currentPagoEl);
+    }
+}
+
+function doTogglePagoAPI(id, el) {
+    apiCall('entrega', 'toggle_pago', { id }).then(res => {
+        if (res.success) {
+            const newState = res.estado_pago;
+            const card = el.closest('.delivery-card');
+            card.dataset.deudor = '0';
+            card.dataset.pagado = '1';
+
+            if (newState === 'efectivo') {
+                el.className = 'toggle-chip active-success';
+                el.innerHTML = `💵 <span class="chip-text">Efectivo</span>`;
+            } else if (newState === 'yape') {
+                el.className = 'toggle-chip active-primary';
+                el.innerHTML = `📱 <span class="chip-text">Yape</span>`;
+            }
+
+            el.setAttribute('onclick', `togglePago(${id}, '${newState}', this)`);
+            updateEntregaStats();
+            checkCardVisibility(card);
+        }
+    });
 }
 
 // Update stats counters
