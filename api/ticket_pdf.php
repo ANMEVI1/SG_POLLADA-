@@ -23,7 +23,7 @@ if (!$cliente) {
 }
 
 // Fetch config (optional)
-$titulo = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'titulo_evento'")->fetchColumn() ?: 'GRAN POLLADA BAILABLE';
+$titulo = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'titulo_evento'")->fetchColumn() ?: 'GRAN POLLADA SOCIAL';
 $precio = $pdo->query("SELECT precio FROM platillo WHERE estado = 'activo' LIMIT 1")->fetchColumn() ?: '15.00';
 
 // Initialize PDF with Ticket size (80mm width, 140mm height)
@@ -47,12 +47,29 @@ $pdf->Ln(5);
 
 // TICKET NUMBER
 $pdf->SetFont('Arial', 'B', 12);
-$pdf->Cell(70, 6, 'TICKET Nro:', 0, 1, 'C');
+$pdf->Cell(70, 6, 'NRO DE TICKET:', 0, 1, 'C');
 $pdf->SetFont('Arial', 'B', 32);
 $pdf->SetTextColor(230, 81, 0); // Orange color
 $pdf->Cell(70, 15, $cliente['codigo_4digitos'], 0, 1, 'C');
 $pdf->SetTextColor(0, 0, 0); // Reset
 $pdf->Ln(5);
+
+$pdf->SetFont('Arial', '', 9);
+$pdf->Cell(70, 5, '-------------------------------------------------------', 0, 1, 'C');
+$pdf->Ln(3);
+
+// FECHA Y HORA DE ENTREGA (Independiente del Cuadre)
+$fechaEvento = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'fecha_evento'")->fetchColumn();
+if (!$fechaEvento) {
+    $fechaEvento = 'Por coordinar'; 
+}
+$fechaEventoStr = mb_convert_encoding(mb_substr($fechaEvento, 0, 50, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
+
+$pdf->SetFont('Arial', 'B', 10);
+$pdf->Cell(70, 5, 'FECHA Y HORA DE ENTREGA:', 0, 1, 'C');
+$pdf->SetFont('Arial', '', 10);
+$pdf->MultiCell(70, 5, $fechaEventoStr, 0, 'C');
+$pdf->Ln(3);
 
 $pdf->SetFont('Arial', '', 9);
 $pdf->Cell(70, 5, '-------------------------------------------------------', 0, 1, 'C');
@@ -67,8 +84,10 @@ $pdf->Ln(2);
 
 $pdf->SetFont('Arial', 'B', 9);
 $pdf->Cell(70, 5, 'ZONA: ' . $zona, 0, 1, 'L');
-$pdf->Cell(70, 5, 'DIR: ' . $direccion, 0, 1, 'L');
-$pdf->Ln(5);
+$pdf->Cell(70, 5, 'DIRECCION:', 0, 1, 'L');
+$pdf->SetFont('Arial', '', 9);
+$pdf->MultiCell(70, 5, $direccion, 0, 'L');
+$pdf->Ln(4);
 
 // PRICE
 $pdf->SetFont('Arial', 'B', 12);
