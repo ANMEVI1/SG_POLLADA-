@@ -711,6 +711,84 @@ function searchEntregas(query) {
     });
 }
 
+// Search Clientes (Experto)
+function searchClientes(query) {
+    query = query.toLowerCase().trim();
+    let hasMatch = false;
+    document.querySelectorAll('.client-item').forEach(item => {
+        const code = item.dataset.code || '';
+        const name = item.dataset.name || '';
+        const zona = item.dataset.zona || '';
+        const match = !query || code.includes(query) || name.includes(query) || zona.includes(query);
+        
+        if (match) {
+            item.classList.remove('search-hidden');
+            hasMatch = true;
+        } else {
+            item.classList.add('search-hidden');
+        }
+    });
+    const emptyState = document.getElementById('clientesEmptyState');
+    if (emptyState) emptyState.style.display = (!hasMatch && query) ? 'flex' : 'none';
+}
+
+// Search Productos (Experto)
+function searchProductos(query) {
+    query = query.toLowerCase().trim();
+    let hasMatch = false;
+    
+    // Reset all headers first
+    const headers = document.querySelectorAll('.product-header');
+    headers.forEach(h => h.classList.remove('search-hidden'));
+    
+    document.querySelectorAll('.product-item').forEach(item => {
+        const name = item.dataset.name || '';
+        const cat = item.dataset.category || '';
+        const match = !query || name.includes(query) || cat.includes(query);
+        
+        if (match) {
+            item.classList.remove('search-hidden');
+            hasMatch = true;
+        } else {
+            item.classList.add('search-hidden');
+        }
+    });
+    
+    // Hide empty headers
+    if (query) {
+        headers.forEach(header => {
+            const cat = header.dataset.category;
+            const visibleProducts = document.querySelectorAll(`.product-item[data-category="${cat}"]:not(.search-hidden)`);
+            if (visibleProducts.length === 0) {
+                header.classList.add('search-hidden');
+            }
+        });
+    }
+
+    const emptyState = document.getElementById('productosEmptyState');
+    if (emptyState) emptyState.style.display = (!hasMatch && query) ? 'flex' : 'none';
+}
+
+// Search Egresos (Experto)
+function searchEgresos(query) {
+    query = query.toLowerCase().trim();
+    let hasMatch = false;
+    document.querySelectorAll('.egreso-item').forEach(item => {
+        const name = item.dataset.name || '';
+        const cat = item.dataset.category || '';
+        const match = !query || name.includes(query) || cat.includes(query);
+        
+        if (match) {
+            item.classList.remove('search-hidden');
+            hasMatch = true;
+        } else {
+            item.classList.add('search-hidden');
+        }
+    });
+    const emptyState = document.getElementById('egresosEmptyState');
+    if (emptyState) emptyState.style.display = (!hasMatch && query) ? 'flex' : 'none';
+}
+
 // Filter deliveries
 function filterEntregas(filter) {
     // Update active pill

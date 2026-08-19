@@ -62,21 +62,36 @@ $porCategoria = $pdo->query("
         <button class="btn btn-primary btn-sm" onclick="newProducto()">+ Agregar</button>
     </div>
 
+    <!-- Search Bar Experto (Sticky) -->
+    <div class="search-bar" style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 16px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar producto o categoría..." 
+               oninput="searchProductos(this.value)" id="searchProductosInput" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    </div>
+
     <?php if (empty($productos)): ?>
-        <div class="empty-state">
+        <div class="empty-state" id="productosEmptyState">
             <div class="empty-icon">📦</div>
             <p>No hay productos registrados. Agrega los insumos de tu pollada.</p>
         </div>
+        <div id="productosList"></div>
     <?php else: ?>
+        <div class="empty-state" id="productosEmptyState" style="display:none;">
+            <div class="empty-icon">📦</div>
+            <p>No hay coincidencias en tu búsqueda.</p>
+        </div>
+        <div id="productosList">
         <?php 
         $currentCat = '';
         foreach ($productos as $p): 
             if ($p['categoria_nombre'] !== $currentCat):
                 $currentCat = $p['categoria_nombre'];
         ?>
-            <div class="list-header"><?= htmlspecialchars($currentCat) ?></div>
+            <div class="list-header product-header" data-category="<?= htmlspecialchars(strtolower($currentCat)) ?>"><?= htmlspecialchars($currentCat) ?></div>
         <?php endif; ?>
-            <div class="list-item <?= $p['comprado'] ? 'checked' : '' ?>">
+            <div class="list-item product-item <?= $p['comprado'] ? 'checked' : '' ?>"
+                 data-name="<?= htmlspecialchars(strtolower($p['nombre'])) ?>"
+                 data-category="<?= htmlspecialchars(strtolower($p['categoria_nombre'])) ?>">
                 <div class="item-check <?= $p['comprado'] ? 'checked' : '' ?>" 
                      onclick="toggleComprado(<?= $p['id'] ?>, this)">
                     <?= $p['comprado'] ? '✓' : '' ?>
@@ -103,6 +118,7 @@ $porCategoria = $pdo->query("
                 </div>
             </div>
         <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -115,14 +131,29 @@ $porCategoria = $pdo->query("
         <button class="btn btn-primary btn-sm" onclick="newEgreso()">+ Agregar</button>
     </div>
 
+    <!-- Search Bar Experto (Sticky) -->
+    <div class="search-bar" style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 16px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar egreso..." 
+               oninput="searchEgresos(this.value)" id="searchEgresosInput" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    </div>
+
     <?php if (empty($egresos)): ?>
-        <div class="empty-state">
+        <div class="empty-state" id="egresosEmptyState">
             <div class="empty-icon">💸</div>
             <p>No hay egresos imprevistos registrados.</p>
         </div>
+        <div id="egresosList"></div>
     <?php else: ?>
+        <div class="empty-state" id="egresosEmptyState" style="display:none;">
+            <div class="empty-icon">💸</div>
+            <p>No hay coincidencias en tu búsqueda.</p>
+        </div>
+        <div id="egresosList">
         <?php foreach ($egresos as $e): ?>
-            <div class="list-item">
+            <div class="list-item egreso-item" 
+                 data-name="<?= htmlspecialchars(strtolower($e['descripcion'])) ?>"
+                 data-category="<?= htmlspecialchars(strtolower($e['categoria_nombre'])) ?>">
                 <div class="item-info">
                     <div class="item-name"><?= htmlspecialchars($e['descripcion']) ?></div>
                     <div class="item-meta">
@@ -139,6 +170,7 @@ $porCategoria = $pdo->query("
                 </div>
             </div>
         <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 </div>
 

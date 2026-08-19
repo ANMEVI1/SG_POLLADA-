@@ -1462,3 +1462,4 @@ select.form-control {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+.search-hidden { opacity: 0 !important; max-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; border: none !important; overflow: hidden !important; }

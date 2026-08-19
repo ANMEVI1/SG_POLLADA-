@@ -248,6 +248,13 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
         <button class="btn btn-primary btn-sm" onclick="newCliente()">+ Nuevo Cliente</button>
     </div>
 
+    <!-- Search Bar Experto (Sticky) -->
+    <div class="search-bar" style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 16px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por código, nombre o zona..." 
+               oninput="searchClientes(this.value)" id="searchClientesInput" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    </div>
+
     <?php if (empty($clientes)): ?>
         <div class="empty-state" id="clientesEmptyState">
             <div class="empty-icon">👤</div>
@@ -257,11 +264,14 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
     <?php else: ?>
         <div class="empty-state" id="clientesEmptyState" style="display:none;">
             <div class="empty-icon">👤</div>
-            <p>No hay clientes registrados. Agrega los clientes de la pollada.</p>
+            <p>No hay coincidencias en tu búsqueda.</p>
         </div>
         <div id="clientesList">
         <?php foreach ($clientes as $c): ?>
-            <div class="list-item" id="cliente-<?= $c['id'] ?>">
+            <div class="list-item client-item" id="cliente-<?= $c['id'] ?>" 
+                 data-code="<?= htmlspecialchars(strtolower($c['codigo_4digitos'])) ?>"
+                 data-name="<?= htmlspecialchars(strtolower($c['nombre'])) ?>"
+                 data-zona="<?= htmlspecialchars(strtolower($c['zona_nombre'] ?? '')) ?>">
                 <div style="background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;font-family:monospace;letter-spacing:1px;flex-shrink:0;">
                     <?= $c['codigo_4digitos'] ?>
                 </div>

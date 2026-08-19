@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>SG Pollada - Sistema de Gestión</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/styles.css?v=<?= time() ?>">
 </head>
 <body>
     <!-- Toast Container -->
@@ -39,7 +39,7 @@
                     <rect x="3" y="14" width="7" height="7"></rect>
                 </svg>
             </button>
-            <span class="header-badge" style="margin-left:0;">SG Pollada V-0.0.0.9</span>
+            <span class="header-badge" style="margin-left:0;">SG Pollada v0.0.1.0</span>
         </div>
     </header>
 
