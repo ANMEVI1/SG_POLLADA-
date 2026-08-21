@@ -19,20 +19,29 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'El código ' . $codigo . ' ya existe']);
             break;
         }
-        $stmt = $pdo->prepare("INSERT INTO cliente (nombre, direccion, codigo_4digitos, zona_entrega_id) VALUES (?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO cliente (nombre, direccion, codigo_4digitos, zona_entrega_id, colocado_por, parte_ave, quiere_arroz) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $zonaId = !empty($_POST['zona_entrega_id']) ? $_POST['zona_entrega_id'] : null;
+        $parteAve = !empty($_POST['parte_ave']) ? $_POST['parte_ave'] : null;
+        $quiereArroz = isset($_POST['quiere_arroz']) ? (int)$_POST['quiere_arroz'] : 0;
         $stmt->execute([
             trim($_POST['nombre']),
             trim($_POST['direccion']),
             $codigo,
-            $zonaId
+            $zonaId,
+            trim($_POST['colocado_por'] ?? 'Desconocido'),
+            $parteAve,
+            $quiereArroz
         ]);
         $id = $pdo->lastInsertId();
         
         $c = $pdo->query("SELECT c.*, z.nombre AS zona_nombre FROM cliente c LEFT JOIN zona_entrega z ON c.zona_entrega_id = z.id WHERE c.id = " . $id)->fetch();
         ob_start();
         ?>
-        <div class="list-item" id="cliente-<?= $c['id'] ?>">
+        <div class="list-item client-item" id="cliente-<?= $c['id'] ?>" 
+             data-code="<?= htmlspecialchars(strtolower($c['codigo_4digitos'])) ?>"
+             data-name="<?= htmlspecialchars(strtolower($c['nombre'])) ?>"
+             data-zona="<?= htmlspecialchars(strtolower($c['zona_nombre'] ?? '')) ?>"
+             data-arroz="<?= $c['quiere_arroz'] ?>">
             <div style="background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;font-family:monospace;letter-spacing:1px;flex-shrink:0;">
                 <?= $c['codigo_4digitos'] ?>
             </div>
@@ -45,7 +54,7 @@ switch ($action) {
             </div>
             <div class="item-actions">
                 <button class="btn-icon btn-outline sm" 
-                        onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>')">✏️</button>
+                        onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>', '<?= addslashes($c['colocado_por'] ?? '') ?>', '<?= addslashes($c['parte_ave'] ?? '') ?>', <?= $c['quiere_arroz'] ?>)">✏️</button>
                 <button class="btn-icon btn-outline sm" onclick="deleteCliente(<?= $c['id'] ?>)">🗑️</button>
             </div>
         </div>
@@ -57,12 +66,17 @@ switch ($action) {
 
     case 'edit_cliente':
         $zonaId = !empty($_POST['zona_entrega_id']) ? $_POST['zona_entrega_id'] : null;
-        $stmt = $pdo->prepare("UPDATE cliente SET nombre=?, direccion=?, codigo_4digitos=?, zona_entrega_id=? WHERE id=?");
+        $parteAve = !empty($_POST['parte_ave']) ? $_POST['parte_ave'] : null;
+        $quiereArroz = isset($_POST['quiere_arroz']) ? (int)$_POST['quiere_arroz'] : 0;
+        $stmt = $pdo->prepare("UPDATE cliente SET nombre=?, direccion=?, codigo_4digitos=?, zona_entrega_id=?, colocado_por=?, parte_ave=?, quiere_arroz=? WHERE id=?");
         $stmt->execute([
             trim($_POST['nombre']),
             trim($_POST['direccion']),
             trim($_POST['codigo_4digitos']),
             $zonaId,
+            trim($_POST['colocado_por'] ?? 'Desconocido'),
+            $parteAve,
+            $quiereArroz,
             $_POST['cliente_id']
         ]);
         // Also update zona in entrega_cliente

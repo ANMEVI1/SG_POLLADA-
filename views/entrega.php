@@ -286,7 +286,7 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                     <button class="btn-icon btn-outline sm" style="color: #25D366; border-color: #25D366;" 
                             onclick="abrirModalTicket(<?= $c['id'] ?>, '<?= $c['codigo_4digitos'] ?>', '<?= addslashes($c['nombre']) ?>')" title="Enviar Ticket por WhatsApp">💬</button>
                     <button class="btn-icon btn-outline sm" 
-                            onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>')">✏️</button>
+                            onclick="editCliente(<?= $c['id'] ?>, '<?= addslashes($c['nombre']) ?>', '<?= addslashes($c['direccion']) ?>', '<?= $c['codigo_4digitos'] ?>', '<?= $c['zona_entrega_id'] ?? '' ?>', '<?= addslashes($c['colocado_por'] ?? '') ?>', '<?= addslashes($c['parte_ave'] ?? '') ?>')">✏️</button>
                     <button class="btn-icon btn-outline sm" onclick="deleteCliente(<?= $c['id'] ?>)">🗑️</button>
                 </div>
             </div>
@@ -312,8 +312,12 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
             <input type="hidden" id="clienteActionType" value="salir">
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" class="form-control" name="nombre" id="clienteNombre" placeholder="Nombre del cliente" required>
+                    <label class="form-label">Nombre del Cliente</label>
+                    <input type="text" class="form-control" name="nombre" id="clienteNombre" placeholder="Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendedor / Colocado por</label>
+                    <input type="text" class="form-control" name="colocado_por" id="clienteColocadoPor" placeholder="¿Quién vendió este ticket?" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Dirección</label>
@@ -334,6 +338,25 @@ $cajaAbierta = $pdo->query("SELECT id FROM cuadre_caja WHERE estado = 'abierto' 
                             <?php foreach ($zonas as $z): ?>
                                 <option value="<?= $z['id'] ?>"><?= htmlspecialchars($z['nombre']) ?></option>
                             <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Parte del Pollo (Opcional)</label>
+                        <select class="form-control" name="parte_ave" id="clienteParteAve">
+                            <option value="">(Cualquiera / No especifica)</option>
+                            <option value="Pechuga">Pechuga</option>
+                            <option value="Pierna">Pierna</option>
+                            <option value="Entre Pierna">Entre Pierna</option>
+                            <option value="Ala">Ala</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">¿Desea Arroz?</label>
+                        <select class="form-control" name="quiere_arroz" id="clienteQuiereArroz">
+                            <option value="0">No (Solo Papa)</option>
+                            <option value="1">Sí (Con Arroz)</option>
                         </select>
                     </div>
                 </div>

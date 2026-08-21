@@ -37,6 +37,8 @@ $titulo = mb_convert_encoding(mb_substr($titulo, 0, 30, 'UTF-8'), 'ISO-8859-1', 
 $nombre = mb_convert_encoding(mb_substr($cliente['nombre'], 0, 35, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
 $zona = mb_convert_encoding(mb_substr($cliente['zona_nombre'] ?? 'Sin zona', 0, 25, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
 $direccion = mb_convert_encoding(mb_substr($cliente['direccion'], 0, 45, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
+$colocadoPor = mb_convert_encoding(mb_substr($cliente['colocado_por'] ?? 'Desconocido', 0, 35, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
+$parteAve = mb_convert_encoding(mb_substr($cliente['parte_ave'] ?? '', 0, 25, 'UTF-8'), 'ISO-8859-1', 'UTF-8');
 
 // Title
 $pdf->SetFont('Arial', 'B', 14);
@@ -83,6 +85,13 @@ $pdf->MultiCell(70, 6, $nombre, 0, 'L');
 $pdf->Ln(2);
 
 $pdf->SetFont('Arial', 'B', 9);
+$pdf->Cell(70, 5, 'VENDIDO POR: ' . $colocadoPor, 0, 1, 'L');
+if ($parteAve) {
+    $pdf->Cell(70, 5, 'PARTE POLLO: ' . $parteAve, 0, 1, 'L');
+}
+if (isset($cliente['quiere_arroz']) && $cliente['quiere_arroz'] == 1) {
+    $pdf->Cell(70, 5, 'ADICIONAL: Con Arroz', 0, 1, 'L');
+}
 $pdf->Cell(70, 5, 'ZONA: ' . $zona, 0, 1, 'L');
 $pdf->Cell(70, 5, 'DIRECCION:', 0, 1, 'L');
 $pdf->SetFont('Arial', '', 9);

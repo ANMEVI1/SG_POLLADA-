@@ -372,17 +372,17 @@ function abrirModalTicket(id, codigo, nombre) {
     waCurrentId = id;
     waCurrentName = nombre;
     waCurrentCode = codigo;
-    
+
     document.getElementById('waTicketCode').textContent = codigo;
     document.getElementById('waTicketName').textContent = nombre;
     document.getElementById('waPhoneNumber').value = '';
-    
+
     // Reset buttons
     const btnD = document.getElementById('btnDescargarTicket');
     const btnW = document.getElementById('btnEnviarWA');
     if (btnD) { btnD.innerHTML = '⬇️ 1. Descargar Ticket'; btnD.disabled = false; }
     if (btnW) { btnW.disabled = true; btnW.style.opacity = '0.5'; }
-    
+
     openModal('modalWhatsAppTicket');
     setTimeout(() => document.getElementById('waPhoneNumber').focus(), 300);
 }
@@ -395,31 +395,31 @@ async function descargarTicketPDF(btn) {
     try {
         const baseUrl = window.location.origin + window.location.pathname.replace('index.php', '');
         const ticketUrl = baseUrl + 'api/ticket_pdf.php?id=' + waCurrentId;
-        
+
         const response = await fetch(ticketUrl);
         if (!response.ok) throw new Error('Error en el servidor');
-        
+
         const blob = await response.blob();
         const objectUrl = window.URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = objectUrl;
-        
+
         const cleanName = waCurrentName.replace(/[^A-Za-z0-9_\-]/g, '').replace(/\s+/g, '_');
         downloadLink.download = `Ticket_${waCurrentCode}_${cleanName}.pdf`;
-        
+
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
-        
+
         btn.innerHTML = '✅ Ticket Descargado';
-        
+
         // Desbloquear botón WhatsApp
         const btnW = document.getElementById('btnEnviarWA');
         if (btnW) {
             btnW.disabled = false;
             btnW.style.opacity = '1';
         }
-        
+
     } catch (error) {
         showToast('Ocurrió un error al descargar', 'error');
         btn.innerHTML = originalText;
@@ -434,22 +434,25 @@ function abrirChatWhatsApp() {
         document.getElementById('waPhoneNumber').focus();
         return;
     }
-    
+
     const text = `Hola ${waCurrentName}, gracias por tu apoyo. Aquí te envío adjunto tu ticket para la pollada 🍗🎫`;
     const fullPhone = '+51' + phone;
     const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
-    
+
     window.open(waUrl, '_blank');
     closeModal('modalWhatsAppTicket');
 }
 
 // Edit cliente
-function editCliente(id, nombre, direccion, codigo, zonaId) {
+function editCliente(id, nombre, direccion, codigo, zonaId, colocadoPor, parteAve, quiereArroz) {
     document.getElementById('clienteId').value = id;
     document.getElementById('clienteNombre').value = nombre;
+    document.getElementById('clienteColocadoPor').value = colocadoPor || '';
     document.getElementById('clienteDireccion').value = direccion;
     document.getElementById('clienteCodigo').value = codigo;
     document.getElementById('clienteZona').value = zonaId || '';
+    document.getElementById('clienteParteAve').value = parteAve || '';
+    document.getElementById('clienteQuiereArroz').value = quiereArroz || '0';
     document.getElementById('modalClienteTitle').textContent = 'Editar Cliente';
     openModal('modalCliente');
 }
@@ -715,37 +718,52 @@ function searchEntregas(query) {
 function searchClientes(query) {
     query = query.toLowerCase().trim();
     let hasMatch = false;
+    let visibleCount = 0;
+    const totalCount = document.querySelectorAll('.client-item').length;
+
     document.querySelectorAll('.client-item').forEach(item => {
         const code = item.dataset.code || '';
         const name = item.dataset.name || '';
         const zona = item.dataset.zona || '';
         const match = !query || code.includes(query) || name.includes(query) || zona.includes(query);
-        
+
         if (match) {
             item.classList.remove('search-hidden');
             hasMatch = true;
+            visibleCount++;
         } else {
             item.classList.add('search-hidden');
         }
     });
+
     const emptyState = document.getElementById('clientesEmptyState');
     if (emptyState) emptyState.style.display = (!hasMatch && query) ? 'flex' : 'none';
+
+    // Update counter
+    const countSpan = document.querySelector('#tab-clientes .fs-sm.text-muted');
+    if (countSpan) {
+        if (query) {
+            countSpan.textContent = `Mostrando ${visibleCount} de ${totalCount} clientes`;
+        } else {
+            countSpan.textContent = `${totalCount} clientes registrados`;
+        }
+    }
 }
 
 // Search Productos (Experto)
 function searchProductos(query) {
     query = query.toLowerCase().trim();
     let hasMatch = false;
-    
+
     // Reset all headers first
     const headers = document.querySelectorAll('.product-header');
     headers.forEach(h => h.classList.remove('search-hidden'));
-    
+
     document.querySelectorAll('.product-item').forEach(item => {
         const name = item.dataset.name || '';
         const cat = item.dataset.category || '';
         const match = !query || name.includes(query) || cat.includes(query);
-        
+
         if (match) {
             item.classList.remove('search-hidden');
             hasMatch = true;
@@ -753,7 +771,7 @@ function searchProductos(query) {
             item.classList.add('search-hidden');
         }
     });
-    
+
     // Hide empty headers
     if (query) {
         headers.forEach(header => {
@@ -777,7 +795,7 @@ function searchEgresos(query) {
         const name = item.dataset.name || '';
         const cat = item.dataset.category || '';
         const match = !query || name.includes(query) || cat.includes(query);
-        
+
         if (match) {
             item.classList.remove('search-hidden');
             hasMatch = true;
@@ -896,13 +914,13 @@ function solicitarCierre(actionType = 'cerrar_caja') {
     pinCallback = () => location.reload();
 
     document.getElementById('modalPinTitle').textContent = '🔒 Cerrar Jornada';
-    
+
     if (actionType === 'cerrar_caja_hard') {
         document.getElementById('modalPinDesc').innerHTML = '<span class="text-danger fw-bold">⚠️ ATENCIÓN: Se ocultarán todos los clientes y entregas para empezar desde cero.</span><br>Ingresa tu PIN:';
     } else {
         document.getElementById('modalPinDesc').textContent = 'Ingresa tu PIN para cerrar la jornada (Los clientes se mantendrán para el siguiente turno)';
     }
-    
+
     document.getElementById('btnSubmitPin').textContent = '🔴 Cerrar Jornada';
     document.getElementById('btnSubmitPin').className = 'btn btn-danger';
 
@@ -911,13 +929,13 @@ function solicitarCierre(actionType = 'cerrar_caja') {
 
     // Clear inputs
     document.querySelectorAll('.pin-input').forEach(i => i.value = '');
-    
+
     // Si modalTipoCierre está abierto, cerrarlo primero
     const modalTipo = document.getElementById('modalTipoCierre');
     if (modalTipo && modalTipo.classList.contains('active')) {
         closeModal('modalTipoCierre');
     }
-    
+
     openModal('modalPin');
     setTimeout(() => {
         const firstInput = document.querySelector('.pin-input');
